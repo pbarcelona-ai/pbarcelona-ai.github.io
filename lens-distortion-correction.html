@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lens Distortion Correction Demo | Barcelona Enterprises</title>
+    <meta name="description" content="A scoped SystemVerilog demo for streaming lens-distortion correction with AXI interfaces, bilinear interpolation, and a 128x128 on-chip frame buffer.">
+    <style>
+        :root {
+            --bg-primary: #0a192f;
+            --bg-secondary: #112240;
+            --bg-card: #1d2d50;
+            --text-heading: #ccd6f6;
+            --text-body: #8892b0;
+            --accent: #64ffda;
+            --accent-dim: rgba(100, 255, 218, 0.1);
+            --border: #233554;
+            --code-bg: #050e1a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-body);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Top Navigation Header */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            color: var(--text-heading);
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .brand span {
+            color: var(--accent);
+        }
+
+        .doc-badge {
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            border: 1px solid var(--accent);
+        }
+
+        /* Hero Section */
+        .hero {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        @media (max-width: 768px) {
+            .hero { grid-template-columns: 1fr; }
+        }
+
+        h1 {
+            color: var(--text-heading);
+            font-size: 2.2rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .doc-id {
+            font-family: monospace;
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .tagline {
+            font-size: 1.1rem;
+            color: var(--text-heading);
+            margin-bottom: 20px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .quick-specs-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .quick-specs-card h3 {
+            color: var(--text-heading);
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .spec-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .spec-list li {
+            padding: 6px 0;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .spec-list li span:last-child {
+            color: var(--text-heading);
+        }
+
+        /* Section Formatting */
+        section {
+            margin-bottom: 60px;
+        }
+
+        h2 {
+            color: var(--text-heading);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            font-size: 1.6rem;
+            margin-bottom: 25px;
+        }
+
+        /* Block Diagram SVG Container */
+        .diagram-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-card);
+            color: var(--accent);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        td {
+            font-size: 0.95rem;
+        }
+
+        td.code {
+            font-family: monospace;
+            color: var(--accent);
+        }
+
+        /* Dynamic Parameter Calculator Card */
+        .calculator-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-heading);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            font-family: monospace;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+
+        .calc-result {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calc-result span.value {
+            color: var(--accent);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* RTL Code Preview */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: var(--text-heading);
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.85rem;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-body);
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font-family: monospace;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            max-width: 760px;
+            font-size: 3rem;
+            line-height: 1.12;
+        }
+
+        .hero-copy {
+            max-width: 700px;
+            font-size: 1.05rem;
+        }
+
+        .hero-actions, .resource-links {
+            flex-wrap: wrap;
+        }
+
+        .quick-specs-card {
+            align-self: start;
+        }
+
+        .callout {
+            border-left: 3px solid var(--accent);
+            background: var(--accent-dim);
+            padding: 14px 18px;
+            margin: 24px 0;
+        }
+
+        .callout strong, .content-grid h3, .architecture h3 {
+            color: var(--text-heading);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 30px;
+        }
+
+        .content-grid h3, .architecture h3 {
+            margin-bottom: 8px;
+        }
+
+        .content-grid ul, .limitations {
+            padding-left: 20px;
+        }
+
+        .content-grid li, .limitations li {
+            margin: 8px 0;
+        }
+
+        .architecture img {
+            display: block;
+            width: 100%;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        .architecture figcaption {
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+
+        .resource-links {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        a.text-link {
+            color: var(--accent);
+        }
+
+        .spec-list li span:first-child {
+            padding-right: 12px;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 24px 16px; }
+            header { gap: 12px; }
+            .hero { gap: 20px; }
+            .hero h1 { font-size: 2.2rem; }
+            .hero-actions a { flex: 1 1 100%; text-align: center; }
+            .content-grid { grid-template-columns: 1fr; gap: 10px; }
+            th, td { padding: 10px; }
+        }
+    </style>
+    <link rel="stylesheet" href="site.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="brand">BARCELONA <span>ENTERPRISES</span></a>
+            <span class="doc-badge">SCOPED RTL DEMO</span>
+        </header>
+
+        <main>
+            <div class="hero">
+                <div>
+                    <span class="eyebrow">SYSTEMVERILOG | FPGA IMAGE PIPELINE</span>
+                    <h1>Streaming lens-distortion correction</h1>
+                    <p class="tagline">A compact, testable demo of calibrated image remapping in RTL.</p>
+                    <p class="hero-copy">The design buffers an RGB frame, maps each output pixel to a source coordinate, and reconstructs the output with bilinear interpolation. It supports radial and tangential distortion parameters and uses AXI4-Stream video I/O with AXI4-Lite configuration.</p>
+                    <div class="hero-actions">
+                        <a href="demo/lens-distortion-correction/README.md" class="btn-primary">Read the technical README</a>
+                        <a href="demo/lens-distortion-correction/rtl/image_system_demo.sv" class="btn-secondary">View top-level RTL</a>
+                    </div>
+                </div>
+
+                <aside class="quick-specs-card" aria-label="Demo specifications">
+                    <h3>Demo specifications</h3>
+                    <ul class="spec-list">
+                        <li><span>Frame capacity</span><span>128 x 128</span></li>
+                        <li><span>Pixel format</span><span>RGB888</span></li>
+                        <li><span>Interpolation</span><span>Bilinear</span></li>
+                        <li><span>Pipeline latency</span><span>31 cycles</span></li>
+                        <li><span>Throughput</span><span>1 pixel / cycle</span></li>
+                        <li><span>Control</span><span>AXI4-Lite</span></li>
+                    </ul>
+                </aside>
+            </div>
+
+            <section class="architecture" id="architecture">
+                <h2>How the demo works</h2>
+                <figure class="diagram-container">
+                    <img src="demo/lens-distortion-correction/docs/block_diagram.svg" alt="AXI stream input writes an on-chip frame buffer; coordinate generation and bilinear interpolation produce the corrected AXI stream output, configured over AXI4-Lite." loading="lazy">
+                    <figcaption>One input frame is buffered on chip before the corrected output frame is streamed.</figcaption>
+                </figure>
+            </section>
+
+            <section id="capabilities">
+                <h2>What is included</h2>
+                <div class="content-grid">
+                    <div>
+                        <h3>Correction pipeline</h3>
+                        <ul>
+                            <li>Radial coefficients <code>k1</code>, <code>k2</code>, and <code>k3</code>, plus tangential coefficients <code>p1</code> and <code>p2</code>.</li>
+                            <li>Per-pixel coordinate generation followed by four-tap bilinear interpolation.</li>
+                            <li>Clamp-to-edge sampling for coordinates beyond the frame.</li>
+                            <li>31-cycle request-to-pixel latency; a fully pipelined datapath accepts one pixel request per clock.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Interfaces and verification</h3>
+                        <ul>
+                            <li>AXI4-Stream RGB888 input and output, with frame and line markers.</li>
+                            <li>AXI4-Lite register interface for frame geometry and calibration parameters.</li>
+                            <li>SystemVerilog testbenches run with Icarus Verilog and generate synthetic test charts.</li>
+                            <li>The barrel-distortion regression checks output against a golden model and measures image-error improvement.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="callout">
+                    <strong>Measured simulation example:</strong> for one barrel-distortion test, mean absolute error fell from 68.4 on the warped image to 34.4 after correction. This is a testbench result, not a hardware performance guarantee.
+                </div>
+            </section>
+
+            <section id="scope">
+                <h2>A deliberately limited build</h2>
+                <p>This page describes the compact demonstration edition, not a general-purpose video pipeline. Other versions are available with expanded capabilities, including additional correction models, interpolation options, and larger-frame workflows.</p>
+                <ul class="limitations">
+                    <li>The frame buffer is internal memory only and sized for 128 × 128 pixels; there is no external-memory path.</li>
+                    <li>Frames are processed sequentially. The next input frame waits until the previous output completes.</li>
+                    <li>Output backpressure is not supported; keep <code>m_axis_tready</code> asserted.</li>
+                    <li>Bilinear interpolation is the only mode in this demo. Its full image regression exercises barrel distortion.</li>
+                    <li>Test input is generated by the testbench; this demo does not load user-supplied image files.</li>
+                    <li>Frame dimensions are not checked against the buffer limit in RTL. Keep configured dimensions at or below 128 × 128.</li>
+                </ul>
+                <p>Timing figures are synthesis-netlist estimates, not vendor place-and-route timing sign-off.</p>
+            </section>
+
+            <section id="try-it">
+                <h2>Explore the implementation</h2>
+                <p>Run the SystemVerilog regression from <code>demo/lens-distortion-correction</code> with <code>make test-sv</code>. The testbench builds a synthetic chart, applies distortion, and checks the corrected frame.</p>
+                <div class="resource-links">
+                    <a class="text-link" href="demo/lens-distortion-correction/README.md">Full documentation and register map</a>
+                    <a class="text-link" href="demo/lens-distortion-correction/tb_verilog/tb_image_system_demo.sv">SystemVerilog regression testbench</a>
+                    <a class="text-link" href="index.html">Back to IP core portfolio</a>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+                <p>Barcelona Enterprises of Florida | <a class="text-link" href="mailto:barcelona.fl.enterprises@gmail.com">Discuss expanded demo versions</a></p>
+        </footer>
+    </div>
+</body>
+</html>
