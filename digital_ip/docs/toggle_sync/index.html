@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#0a192f">
-<meta name="description" content="Event transfer between clock domains using a toggle level. Version 1.0.0. Every one-clock event_i pulse in the source domain flips a toggle flop; the destination synchronizes the toggle and emits event_o for each change. No handshake, so events must be spaced at least STAGES+2 destination clocks apart (source clock period permitting) or they are lost; use pulse_sync when spacing cannot be guaranteed. Clocks - src_clk and dst_clk are unrelated. Reset - synchronous per domain, active low. Latency - STAGES+1 dst clocks. Errors - none reported; STAGES&lt;2 rejected at elaboration. Clock - the clock of the parent block, all signals are synchronous to it. synchronous to it.">
-<title>Toggle Sync | Digital IP</title><link rel="stylesheet" href="../site.css">
+<meta name="description" content="Event transfer between clock domains using a toggle level. Version 1.0.0.">
+<title>Toggle Sync | Digital IP</title><link rel="canonical" href="https://pbarcelona-ai.github.io/digital_ip/docs/toggle_sync/index.html"><meta property="og:type" content="website"><meta property="og:site_name" content="Barcelona Enterprises"><meta property="og:title" content="Toggle Sync | Digital IP"><meta property="og:description" content="Event transfer between clock domains using a toggle level. Version 1.0.0."><meta property="og:url" content="https://pbarcelona-ai.github.io/digital_ip/docs/toggle_sync/index.html"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Toggle Sync | Digital IP"><meta name="twitter:description" content="Event transfer between clock domains using a toggle level. Version 1.0.0."><link rel="stylesheet" href="../site.css">
 </head><body>
 <header class="topbar"><a class="brand" href="../index.html">BARCELONA ENTERPRISES / DIGITAL IP / CDC</a><a href="../../README.md">Repository README</a></header>
 <main class="shell">

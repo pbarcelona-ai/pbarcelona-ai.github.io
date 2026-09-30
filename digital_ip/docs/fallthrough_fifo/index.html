@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#0a192f">
-<meta name="description" content="First-word-fall-through FIFO with valid/ready handshakes. Version 1.0.0. The oldest word is presented on m_data_o as soon as the FIFO is not empty (m_valid_o), with no read latency; m_ready_i pops it. Storage is a register-array with asynchronous read (distributed RAM style), intended for shallow FIFOs (DEPTH &lt;= 64); use ip_axis_fifo for deep block-RAM FIFOs. Clock - clk. Reset - synchronous active low, empty. Latency - 1 clock from a write into an empty FIFO to m_valid_o. Overflow - s_ready_o is low when full, so a compliant source never overflows. Errors - DEPTH must be a power of two &gt;= 2 (rejected at elaboration).">
-<title>Fallthrough Fifo | Digital IP</title><link rel="stylesheet" href="../site.css">
+<meta name="description" content="First-word-fall-through FIFO with valid/ready handshakes. Version 1.0.0.">
+<title>Fallthrough Fifo | Digital IP</title><link rel="canonical" href="https://pbarcelona-ai.github.io/digital_ip/docs/fallthrough_fifo/index.html"><meta property="og:type" content="website"><meta property="og:site_name" content="Barcelona Enterprises"><meta property="og:title" content="Fallthrough Fifo | Digital IP"><meta property="og:description" content="First-word-fall-through FIFO with valid/ready handshakes. Version 1.0.0."><meta property="og:url" content="https://pbarcelona-ai.github.io/digital_ip/docs/fallthrough_fifo/index.html"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Fallthrough Fifo | Digital IP"><meta name="twitter:description" content="First-word-fall-through FIFO with valid/ready handshakes. Version 1.0.0."><link rel="stylesheet" href="../site.css">
 </head><body>
 <header class="topbar"><a class="brand" href="../index.html">BARCELONA ENTERPRISES / DIGITAL IP / FIFO</a><a href="../../README.md">Repository README</a></header>
 <main class="shell">

@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#0a192f">
-<meta name="description" content="Pulse transfer between clock domains with full handshake. Version 1.0.0. A toggle crosses to the destination and an acknowledge toggle crosses back, so a new pulse is accepted only when the previous one has completed (busy_o low). Pulses arriving while busy are dropped and flagged on drop_o (one src clock) so nothing is lost silently. Clocks - src_clk and dst_clk unrelated. Reset - synchronous per domain, active low. Latency - about STAGES+2 dst clocks to pulse_o; busy clears after ~2*STAGES+3 clocks of the slower domain. Errors - drop_o on overrun; STAGES&lt;2 rejected at elaboration. Clock - the clock of the parent block, all signals are synchronous to it. all signals are synchronous to it.">
-<title>Pulse Sync | Digital IP</title><link rel="stylesheet" href="../site.css">
+<meta name="description" content="Pulse transfer between clock domains with full handshake. Version 1.0.0.">
+<title>Pulse Sync | Digital IP</title><link rel="canonical" href="https://pbarcelona-ai.github.io/digital_ip/docs/pulse_sync/index.html"><meta property="og:type" content="website"><meta property="og:site_name" content="Barcelona Enterprises"><meta property="og:title" content="Pulse Sync | Digital IP"><meta property="og:description" content="Pulse transfer between clock domains with full handshake. Version 1.0.0."><meta property="og:url" content="https://pbarcelona-ai.github.io/digital_ip/docs/pulse_sync/index.html"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Pulse Sync | Digital IP"><meta name="twitter:description" content="Pulse transfer between clock domains with full handshake. Version 1.0.0."><link rel="stylesheet" href="../site.css">
 </head><body>
 <header class="topbar"><a class="brand" href="../index.html">BARCELONA ENTERPRISES / DIGITAL IP / CDC</a><a href="../../README.md">Repository README</a></header>
 <main class="shell">
