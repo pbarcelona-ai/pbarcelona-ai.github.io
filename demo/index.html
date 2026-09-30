@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hardware Demos | Barcelona Enterprises</title>
+    <meta name="description" content="Explore hardware IP demonstrations from Barcelona Enterprises.">
+    <style>
+        :root {
+            --primary: #0a192f;
+            --accent: #64ffda;
+            --text: #8892b0;
+            --heading: #ccd6f6;
+            --bg-card: #112240;
+            --border: #233554;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--primary);
+            color: var(--text);
+            margin: 0;
+            line-height: 1.6;
+        }
+        header, main, footer {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+        header, footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        footer {
+            border-top: 1px solid var(--border);
+            border-bottom: 0;
+        }
+        a { color: var(--accent); }
+        .brand { color: var(--heading); font-weight: 700; text-decoration: none; }
+        .eyebrow { color: var(--accent); font: 0.85rem monospace; text-transform: uppercase; }
+        h1, h2 { color: var(--heading); }
+        .demo-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 0; list-style: none; }
+        .demo-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 22px; }
+        .demo-card h2 { margin-top: 0; }
+        .demo-links { display: flex; flex-wrap: wrap; gap: 16px; }
+        @media (max-width: 600px) {
+            header, footer { flex-direction: column; }
+            main { padding-top: 12px; }
+        }
+    </style>
+    <link rel="stylesheet" href="../site.css">
+</head>
+<body>
+    <header>
+        <a class="brand" href="../index.html">BARCELONA ENTERPRISES</a>
+        <a href="../index.html">Company and IP portfolio</a>
+    </header>
+    <main>
+        <p class="eyebrow">Demonstration projects</p>
+        <h1>Hardware IP demos</h1>
+        <p>Browse runnable demonstrations and their supporting technical documentation.</p>
+        <ul class="demo-list">
+            <li class="demo-card"><h2>Lens Distortion Correction</h2><p>A compact SystemVerilog demonstration of streaming radial and tangential lens-distortion correction.</p><div class="demo-links"><a href="../lens-distortion-correction.html">Demo overview</a><a href="demo/lens-distortion-correction/README.md">Source and documentation</a></div></li>
+        </ul>
+    </main>
+    <footer>
+        <span>Barcelona Enterprises of Florida</span>
+        <a href="../digital_ip/ip/docs/index.html">Digital IP catalog</a>
+    </footer>
+</body>
+</html>

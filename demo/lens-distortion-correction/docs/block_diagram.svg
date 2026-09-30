@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1260 660" width="1260" height="660" font-family="Helvetica, Arial, sans-serif">
+<defs><marker id="e_16a34a" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#16a34a"/></marker><marker id="s_16a34a" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="1" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#16a34a"/></marker><marker id="e_2563eb" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#2563eb"/></marker><marker id="s_2563eb" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="1" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#2563eb"/></marker><marker id="e_374151" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#374151"/></marker><marker id="s_374151" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="1" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#374151"/></marker><marker id="e_6b7280" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#6b7280"/></marker><marker id="s_6b7280" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="1" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#6b7280"/></marker><marker id="e_7c3aed" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#7c3aed"/></marker><marker id="s_7c3aed" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="1" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#7c3aed"/></marker><marker id="e_ea580c" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 z" fill="#ea580c"/></marker><marker id="s_ea580c" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="1" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L9,3.5 L0,7 z" fill="#ea580c"/></marker></defs>
+<rect width="1260" height="660" fill="#ffffff"/>
+<text x="630.0" y="28" font-size="20" font-weight="bold" text-anchor="middle" fill="#111827">Lens Distortion Correction - Block Diagram</text>
+<text x="630.0" y="45" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#4b5563">Q16.16 fixed point  |  RGB888  |  barrel/pincushion radial + tangential distortion  |  bilinear only</text>
+<rect x="20" y="58" width="1220" height="560" rx="8" fill="none" stroke="#6b7280" stroke-width="2"/>
+<text x="30" y="76" font-size="13" font-weight="bold" text-anchor="start" fill="#6b7280">image_system_demo (RTL top)</text>
+<rect x="8" y="110" width="130" height="64" rx="16" fill="#eceff3" stroke="#6b7280" stroke-width="1.5"/>
+<text x="73.0" y="130" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">AXI4-Lite slave</text>
+<text x="73.0" y="148" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">s_axil_*</text>
+<text x="73.0" y="162" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">config / status</text>
+<rect x="8" y="280" width="130" height="78" rx="16" fill="#eceff3" stroke="#6b7280" stroke-width="1.5"/>
+<text x="73.0" y="300" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">AXI4-Stream in</text>
+<text x="73.0" y="318" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">s_axis_*</text>
+<text x="73.0" y="332" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">RGB888 + tlast/tuser</text>
+<text x="73.0" y="346" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">line, then &gt;=5 idle</text>
+<rect x="1108" y="300" width="130" height="64" rx="16" fill="#eceff3" stroke="#6b7280" stroke-width="1.5"/>
+<text x="1173.0" y="320" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">AXI4-Stream out</text>
+<text x="1173.0" y="338" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">m_axis_*</text>
+<text x="1173.0" y="352" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">same line timing</text>
+<rect x="158" y="80" width="560" height="100" rx="8" fill="none" stroke="#2563eb" stroke-width="2"/>
+<text x="168" y="98" font-size="12" font-weight="bold" text-anchor="start" fill="#2563eb">axi_lite_regs</text>
+<rect x="172" y="106" width="250" height="66" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="297.0" y="126" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">Register file</text>
+<text x="297.0" y="144" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">CTRL/STATUS, IMG_WIDTH/HEIGHT</text>
+<text x="297.0" y="158" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">K1-K3, P1-P2 (radial+tangential)</text>
+<text x="297.0" y="172" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">FX FY CX CY, CALIB_MODE</text>
+<rect x="438" y="106" width="264" height="66" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="570.0" y="126" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">Derived config</text>
+<text x="570.0" y="144" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">cx,cy,fx,fy from centre/scale/size</text>
+<text x="570.0" y="158" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">(mulq_s pipelines, settle FSM)</text>
+<text x="570.0" y="172" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">2x fixed_recip -&gt; 1/fx, 1/fy</text>
+<rect x="738" y="80" width="400" height="46" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="938.0" y="100" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#111827">Shared: barrel_pkg (Q16.16, qmul/qsat/qsat48, MAX_W/H=128),</text>
+<text x="938.0" y="118" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">distortion_model_pkg (calib_params_t)</text>
+<rect x="738" y="132" width="400" height="46" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="938.0" y="152" font-size="10.5" font-weight="bold" text-anchor="middle" fill="#111827">mulq_s IP: (a*b)&gt;&gt;&gt;16 in 2 cycles, four 16x16 DSP</text>
+<text x="938.0" y="170" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">partial products. Used by coord_gen and axi_lite_regs.</text>
+<rect x="158" y="262" width="145" height="96" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="230.5" y="282" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">axis_in_ctrl</text>
+<text x="230.5" y="300" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">AXI-S slave</text>
+<text x="230.5" y="314" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">raster write addr</text>
+<text x="230.5" y="328" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">tuser -&gt; addr 0</text>
+<rect x="158" y="388" width="145" height="76" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="230.5" y="408" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">Top FSM</text>
+<text x="230.5" y="426" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">T_LOAD -&gt; T_OUTPUT</text>
+<text x="230.5" y="440" font-size="10" font-weight="normal" text-anchor="middle" fill="#374151">capture_en / busy</text>
+<rect x="340" y="250" width="165" height="260" rx="8" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5"/>
+<text x="422.5" y="270" font-size="11.5" font-weight="bold" text-anchor="middle" fill="#111827">frame_buffer</text>
+<text x="422.5" y="288" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">4x replicated RAMB36</text>
+<text x="422.5" y="302" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">banks, internal memory</text>
+<text x="422.5" y="316" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">only (no external DDR)</text>
+<text x="422.5" y="330" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">128 x 128 x 24 bit each</text>
+<text x="422.5" y="344" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151"></text>
+<text x="422.5" y="358" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">1 write port</text>
+<text x="422.5" y="372" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">4 read ports</text>
+<text x="422.5" y="386" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">(2x2 bilinear corners)</text>
+<text x="422.5" y="400" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">1-cycle sync read</text>
+<rect x="538" y="200" width="560" height="380" rx="8" fill="none" stroke="#16a34a" stroke-width="2"/>
+<text x="548" y="218" font-size="12" font-weight="bold" text-anchor="start" fill="#16a34a">axis_out_ctrl</text>
+<rect x="552" y="226" width="155" height="96" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="629.5" y="246" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">Raster generator</text>
+<text x="629.5" y="264" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">x, y counters</text>
+<text x="629.5" y="278" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">line gap</text>
+<text x="629.5" y="292" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">1 pixel/clock,</text>
+<text x="629.5" y="306" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">never stalls</text>
+<rect x="552" y="336" width="155" height="130" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="629.5" y="356" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">coord_gen  (23 cycles)</text>
+<text x="629.5" y="374" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">radial + tangential</text>
+<text x="629.5" y="388" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">normalize (x-cx)/fx</text>
+<text x="629.5" y="402" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">r2,r4,r6 -&gt; factor</text>
+<text x="629.5" y="416" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">sx = cx + n*factor*fx</text>
+<text x="629.5" y="430" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">every mult = mulq_s</text>
+<text x="629.5" y="444" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">+ qsat48</text>
+<rect x="730" y="226" width="175" height="96" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="817.5" y="246" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">Address expand  (4 stages)</text>
+<text x="817.5" y="264" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">clamp-to-edge, int/frac split</text>
+<text x="817.5" y="278" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">row base = y0*width</text>
+<text x="817.5" y="292" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">(registered)</text>
+<text x="817.5" y="306" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">4 corner addresses</text>
+<rect x="730" y="336" width="175" height="96" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="817.5" y="356" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">bilinear  (3 stages)</text>
+<text x="817.5" y="374" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">2x2 taps, 8-bit weights</text>
+<text x="817.5" y="388" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">12 pixel*weight products</text>
+<text x="817.5" y="402" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">then sum + round</text>
+<rect x="930" y="226" width="148" height="206" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="1004.0" y="246" font-size="11" font-weight="bold" text-anchor="middle" fill="#111827">Output stage</text>
+<text x="1004.0" y="264" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">pixel select</text>
+<text x="1004.0" y="278" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151"></text>
+<text x="1004.0" y="292" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">tlast/tuser tag</text>
+<text x="1004.0" y="306" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">delay line</text>
+<text x="1004.0" y="320" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">31-deep shift reg</text>
+<text x="1004.0" y="334" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">(coord_gen 23 +</text>
+<text x="1004.0" y="348" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">addr-expand 4 +</text>
+<text x="1004.0" y="362" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">fb read 1 +</text>
+<text x="1004.0" y="376" font-size="9.5" font-weight="normal" text-anchor="middle" fill="#374151">bilinear 3)</text>
+<polyline points="138,142 172,142" fill="none" stroke="#2563eb" stroke-width="1.8" marker-end="url(#e_2563eb)" marker-start="url(#s_2563eb)"/>
+<polyline points="422,139 438,139" fill="none" stroke="#2563eb" stroke-width="1.8" marker-end="url(#e_2563eb)"/>
+<polyline points="600,180 600,190 830,190 830,200" fill="none" stroke="#2563eb" stroke-width="2.2" marker-end="url(#e_2563eb)"/>
+<text x="715" y="185" font-size="10.5" font-weight="normal" text-anchor="middle" fill="#2563eb" font-style="italic">cfg: calib_params_t + img_width/height, 1/fx, 1/fy</text>
+<polyline points="138,310 158,310" fill="none" stroke="#6b7280" stroke-width="1.8" marker-end="url(#e_6b7280)"/>
+<polyline points="303,308 340,308" fill="none" stroke="#ea580c" stroke-width="2.2" marker-end="url(#e_ea580c)"/>
+<text x="322" y="298" font-size="9" font-weight="normal" text-anchor="middle" fill="#ea580c" font-style="italic">wr</text>
+<polyline points="230,388 230,358" fill="none" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#e_7c3aed)"/>
+<text x="250" y="378" font-size="9" font-weight="normal" text-anchor="start" fill="#7c3aed" font-style="italic">capture_en</text>
+<polyline points="230,464 230,610 817,610 817,580" fill="none" stroke="#7c3aed" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#e_7c3aed)"/>
+<text x="520" y="604" font-size="10" font-weight="normal" text-anchor="middle" fill="#7c3aed" font-style="italic">start_output / busy, frame_out_done (control)</text>
+<polyline points="707,384 730,384" fill="none" stroke="#374151" stroke-width="1.8" marker-end="url(#e_374151)"/>
+<text x="718" y="376" font-size="9" font-weight="normal" text-anchor="middle" fill="#374151" font-style="italic">req x,y</text>
+<polyline points="629,466 629,500 817,500 817,432" fill="none" stroke="#16a34a" stroke-width="2.2" marker-end="url(#e_16a34a)"/>
+<text x="720" y="494" font-size="10.5" font-weight="normal" text-anchor="middle" fill="#16a34a" font-style="italic">sx, sy (Q16.16)</text>
+<polyline points="905,274 930,274" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#e_16a34a)"/>
+<polyline points="905,384 930,384" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#e_16a34a)"/>
+<polyline points="505,350 552,350" fill="none" stroke="#374151" stroke-width="1.8" marker-end="url(#e_374151)"/>
+<text x="528" y="342" font-size="9" font-weight="normal" text-anchor="middle" fill="#374151" font-style="italic">req x,y</text>
+<polyline points="340,340 300,340" fill="none" stroke="#ea580c" stroke-width="2.2" marker-end="url(#e_ea580c)"/>
+<polyline points="300,380 340,380" fill="none" stroke="#ea580c" stroke-width="2.2" marker-end="url(#e_ea580c)"/>
+<text x="320" y="332" font-size="9" font-weight="normal" text-anchor="middle" fill="#c2410c" font-style="italic">4 rd addr</text>
+<text x="320" y="396" font-size="9" font-weight="normal" text-anchor="middle" fill="#c2410c" font-style="italic">4 rd data</text>
+<polyline points="1078,350 1108,350" fill="none" stroke="#6b7280" stroke-width="2.2" marker-end="url(#e_6b7280)"/>
+<rect x="158" y="624" width="16" height="12" rx="2" fill="#eceff3" stroke="#6b7280" stroke-width="1.3"/>
+<text x="179" y="634" font-size="10.5" font-weight="normal" text-anchor="start" fill="#111827">external interface</text>
+<rect x="309.6" y="624" width="16" height="12" rx="2" fill="#dbeafe" stroke="#2563eb" stroke-width="1.3"/>
+<text x="330.6" y="634" font-size="10.5" font-weight="normal" text-anchor="start" fill="#111827">config plane</text>
+<rect x="424.0" y="624" width="16" height="12" rx="2" fill="#dcfce7" stroke="#16a34a" stroke-width="1.3"/>
+<text x="445.0" y="634" font-size="10.5" font-weight="normal" text-anchor="start" fill="#111827">datapath</text>
+<rect x="513.6" y="624" width="16" height="12" rx="2" fill="#ffedd5" stroke="#ea580c" stroke-width="1.3"/>
+<text x="534.6" y="634" font-size="10.5" font-weight="normal" text-anchor="start" fill="#111827">memory</text>
+<rect x="590.8000000000001" y="624" width="16" height="12" rx="2" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.3"/>
+<text x="611.8000000000001" y="634" font-size="10.5" font-weight="normal" text-anchor="start" fill="#111827">control</text>
+<rect x="674.2" y="624" width="16" height="12" rx="2" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.3"/>
+<text x="695.2" y="634" font-size="10.5" font-weight="normal" text-anchor="start" fill="#111827">shared IP/packages</text>
+<text x="1225" y="634" font-size="10" font-weight="normal" text-anchor="end" fill="#4b5563">solid=data/config  dashed=control</text>
+</svg>
