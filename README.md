@@ -1,6 +1,8 @@
 # barcelona-enterprizes
 Barcelona Enterprises of Florida is a fabless IP developer targeting FPGA and ASIC designs.
 
+Live site: https://pbarcelona-ai.github.io/
+
 ## GitHub Actions
 
 The root-level workflow at `.github/workflows/ci.yml` runs the lens-distortion-correction demo's simulation and synthesis checks on pushes, pull requests, and manual dispatches. Jobs use GitHub-hosted `ubuntu-latest` runners by default.

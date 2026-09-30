@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>Design Notes: Lens Distortion Correction | Barcelona Enterprises</title>
+    <meta name="description" content="Design notes on the lens-distortion-correction SystemVerilog demo: pipeline architecture, latency budget, fixed-point math, and verification strategy.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Barcelona Enterprises">
+    <meta property="og:title" content="Design Notes: Lens Distortion Correction | Barcelona Enterprises">
+    <meta property="og:description" content="Design notes on the lens-distortion-correction SystemVerilog demo: pipeline architecture, latency budget, fixed-point math, and verification strategy.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Design Notes: Lens Distortion Correction | Barcelona Enterprises">
+    <meta name="twitter:description" content="Design notes on the lens-distortion-correction SystemVerilog demo: pipeline architecture, latency budget, fixed-point math, and verification strategy.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Design Notes: Lens Distortion Correction", "url": "https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html", "about": "SystemVerilog hardware IP for streaming lens-distortion correction"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: Lens Distortion Correction", "item": "https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main>
+        <p class="eyebrow">Design notes</p>
+        <h1>Lens Distortion Correction: pipeline design decisions</h1>
+        <article>
+            <p>This is a walkthrough of the design decisions behind the <a href="../lens-distortion-correction.html">lens-distortion-correction demo</a> &mdash; a streaming SystemVerilog IP that corrects barrel/pincushion lens distortion on live AXI4-Stream video, entirely with on-chip memory.</p>
+
+            <h2>Why on-chip only, no external DDR</h2>
+            <p>The frame buffer (<code>frame_buffer.sv</code>) is a 4x-replicated internal BRAM store. Skipping an external-DDR path keeps the demo synthesizable end-to-end in Yosys without a memory controller, and keeps the read side free of arbitration: each of the four bilinear taps gets its own port, so there's never a read-port conflict inside a single pixel request.</p>
+
+            <h2>Why fixed-point Q16.16, not floating point</h2>
+            <p><code>barrel_pkg.sv</code> defines the Q16.16 format shared by the whole datapath. Radial/tangential distortion math (<code>coord_gen.sv</code>) and the AXI4-Lite derived-configuration path both run on <code>qmul()</code>/<code>qsat()</code> helpers built on top of a single 2-cycle pipelined multiplier (<code>mulq_s.sv</code>). Fixed-point keeps every multiply mappable to a small, fixed number of DSP48E1 slices with predictable latency &mdash; floating point would cost far more area for precision this design doesn't need.</p>
+
+            <h2>Latency budget</h2>
+            <p>Coordinate generation is a fixed 23-cycle pipeline that never stalls, one pixel per clock. A tag delay line re-creates <code>tlast</code>/<code>tuser</code> 31 cycles behind the request that produced them, so the output AXI4-Stream framing stays correct without the raster generator needing to know anything about interpolation latency downstream.</p>
+
+            <h2>Verification strategy</h2>
+            <p>Every sub-block (<code>fixed_recip</code>, <code>mulq_s</code>, <code>frame_buffer</code>, <code>coord_gen</code>, <code>bilinear</code>) has its own self-checking testbench with an independent golden reference, runnable standalone in seconds. The full <code>image_system_demo</code> regression then checks the assembled pipeline bit-exact against a separate golden model, using a synthetically generated test chart &mdash; there's no external image dependency, so the regression is fully reproducible from a clean clone.</p>
+
+            <h2>Try it</h2>
+            <p>See the <a href="../lens-distortion-correction.html">demo overview</a> for the block diagram, or the <a href="../demo/lens-distortion-correction/README.md">full README</a> for the repository layout, build targets, and CI details.</p>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>
