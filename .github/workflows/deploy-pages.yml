@@ -25,32 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Checkout barcelona-enterprizes
-        uses: actions/checkout@v4
-        with:
-          repository: pbarcelona-ai/barcelona-enterprizes
-          path: _sources/barcelona-enterprizes
-
-      # Private/not-yet-created repo: requires a DIGITAL_IP_PAT secret with read access.
-      - name: Checkout digital_ip
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          repository: pbarcelona-ai/digital_ip
-          token: ${{ secrets.DIGITAL_IP_PAT }}
-          path: _sources/digital_ip
-
-      - name: Copy source-repo html into their folders
-        run: |
-          mkdir -p barcelona-enterprizes digital_ip/docs
-          cp _sources/barcelona-enterprizes/*.html barcelona-enterprizes/ 2>/dev/null || true
-          cp _sources/barcelona-enterprizes/site.css barcelona-enterprizes/ 2>/dev/null || true
-          if [ -f _sources/digital_ip/docs/index.html ]; then
-            cp _sources/digital_ip/docs/index.html digital_ip/docs/index.html
-          fi
-          rm -rf _sources
-
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
