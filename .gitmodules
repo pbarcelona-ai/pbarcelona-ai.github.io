@@ -1,0 +1,3 @@
+[submodule "digital_ip"]
+	path = digital_ip
+	url = https://github.com/pbarcelona-ai/digital_ip.git
