@@ -1,8 +1,7 @@
 # ***************
 # Filename: deploy-pages.yml
 # Description: Builds and publishes this repository to GitHub Pages
-# on every push to main, and on manual dispatch. Regenerates digital_ip/
-# from the vendor/digital_ip submodule via scripts/build_digital_ip_docs.py.
+# on every push to main, and on manual dispatch.
 # ***************
 name: Deploy Pages
 
@@ -26,13 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-      - name: Regenerate digital_ip/ from the submodule
-        run: python3 scripts/build_digital_ip_docs.py
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
