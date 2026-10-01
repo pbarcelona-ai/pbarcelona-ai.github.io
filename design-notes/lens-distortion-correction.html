@@ -13,12 +13,12 @@
     <meta property="og:title" content="Design Notes: Lens Distortion Correction | FPGA Cores 4U">
     <meta property="og:description" content="Design notes on the lens-distortion-correction SystemVerilog demo: pipeline architecture, latency budget, fixed-point math, and verification strategy.">
     <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html">
-    <meta property="og:image" content="https://pbarcelona-ai.github.io/og-image.png">
-    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-lens-distortion-correction.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-lens-distortion-correction.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Design Notes: Lens Distortion Correction | FPGA Cores 4U">
     <meta name="twitter:description" content="Design notes on the lens-distortion-correction SystemVerilog demo: pipeline architecture, latency budget, fixed-point math, and verification strategy.">
-    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Design Notes: Lens Distortion Correction", "url": "https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html", "about": "SystemVerilog hardware IP for streaming lens-distortion correction"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Design Notes: Lens Distortion Correction", "url": "https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html", "datePublished": "2026-09-30", "dateModified": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-lens-distortion-correction.png", "about": "SystemVerilog hardware IP for streaming lens-distortion correction"}</script>
     <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: Lens Distortion Correction", "item": "https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html"}]}</script>
     <link rel="stylesheet" href="../site.css">
     <style>
@@ -28,13 +28,15 @@
         article h2 { margin-top: 40px; }
         article p, article li { color: var(--text); }
         code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
         .back { display: inline-block; margin-top: 40px; }
     </style>
 </head>
 <body>
-    <main>
+    <main data-pagefind-body>
         <p class="eyebrow">Design notes</p>
         <h1>Lens Distortion Correction: pipeline design decisions</h1>
+        <p class="updated">Published <time datetime="2026-09-30">2026-09-30</time> &middot; Updated <time datetime="2026-10-01">2026-10-01</time></p>
         <article>
             <p>This is a walkthrough of the design decisions behind the <a href="../lens-distortion-correction.html">lens-distortion-correction demo</a> &mdash; a streaming SystemVerilog IP that corrects barrel/pincushion lens distortion on live AXI4-Stream video, entirely with on-chip memory.</p>
 
@@ -51,7 +53,7 @@
             <p>Every sub-block (<code>fixed_recip</code>, <code>mulq_s</code>, <code>frame_buffer</code>, <code>coord_gen</code>, <code>bilinear</code>) has its own self-checking testbench with an independent golden reference, runnable standalone in seconds. The full <code>image_system_demo</code> regression then checks the assembled pipeline bit-exact against a separate golden model, using a synthetically generated test chart &mdash; there's no external image dependency, so the regression is fully reproducible from a clean clone.</p>
 
             <h2>Try it</h2>
-            <p>See the <a href="../lens-distortion-correction.html">demo overview</a> for the block diagram, or the <a href="../demo/lens-distortion-correction/README.md">full README</a> for the repository layout, build targets, and CI details.</p>
+            <p>See the <a href="../lens-distortion-correction.html">demo overview</a> for the block diagram, or the <a href="https://github.com/pbarcelona-ai/pbarcelona-ai.github.io/tree/main/demo/lens-distortion-correction#readme">full README</a> for the repository layout, build targets, and CI details.</p>
         </article>
         <a class="back" href="../index.html">&larr; Back to homepage</a>
     </main>

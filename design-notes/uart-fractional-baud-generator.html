@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>UART Fractional Baud Rate Generator in SystemVerilog | FPGA Cores 4U</title>
+    <meta name="description" content="How a phase-accumulator baud generator gives a UART near-zero baud error from any FPGA clock, with worked FCW values and the 16x oversampling receiver.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/uart-fractional-baud-generator.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="FPGA Cores 4U">
+    <meta property="og:title" content="UART Fractional Baud Rate Generator in SystemVerilog">
+    <meta property="og:description" content="How a phase-accumulator baud generator gives a UART near-zero baud error from any FPGA clock, with worked FCW values and the 16x oversampling receiver.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/uart-fractional-baud-generator.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-uart-fractional-baud-generator.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-uart-fractional-baud-generator.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="UART Fractional Baud Rate Generator in SystemVerilog">
+    <meta name="twitter:description" content="How a phase-accumulator baud generator gives a UART near-zero baud error from any FPGA clock, with worked FCW values and the 16x oversampling receiver.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "UART Fractional Baud Rate Generator in SystemVerilog", "url": "https://pbarcelona-ai.github.io/design-notes/uart-fractional-baud-generator.html", "datePublished": "2026-10-01", "dateModified": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-uart-fractional-baud-generator.png", "about": "Fractional baud rate generation for a UART in SystemVerilog", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: UART fractional baud generator: any baud rate from any clock", "item": "https://pbarcelona-ai.github.io/design-notes/uart-fractional-baud-generator.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.92rem; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+        th { color: var(--heading); }
+        .table-wrap { overflow-x: auto; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main data-pagefind-body>
+        <p class="eyebrow">Design notes</p>
+        <h1>UART fractional baud generator: any baud rate from any clock</h1>
+        <p class="updated">Published <time datetime="2026-10-01">2026-10-01</time></p>
+        <article>
+            <p>These notes cover the baud-rate generator inside the <a href="../ip/uart/">UART</a> core: a 32-bit phase accumulator instead of the usual integer divider. It lets the UART hit standard baud rates almost exactly from whatever clock the rest of the design runs on, with no PLL and no special crystal.</p>
+
+            <h2>The problem with integer dividers</h2>
+            <p>A classic UART divides the system clock by an integer to get a 16&times; oversampling tick. That only works when the clock divides evenly. From a 100 MHz clock:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Baud</th><th>Ideal divisor (f<sub>clk</sub> / 16&middot;baud)</th><th>Integer divider error</th><th>Fractional generator error</th></tr></thead>
+                <tbody>
+                    <tr><td>115,200</td><td>54.25</td><td>+0.47%</td><td>&minus;0.003 ppm</td></tr>
+                    <tr><td>921,600</td><td>6.78</td><td>&minus;3.1%</td><td>+0.001 ppm</td></tr>
+                    <tr><td>1,000,000</td><td>6.25</td><td>+4.2% (&divide;6) or &minus;10.7% (&divide;7)</td><td>&minus;0.001 ppm</td></tr>
+                </tbody>
+            </table></div>
+            <p>A UART link typically tolerates around 2&ndash;3% combined error between the two ends before sampling drifts into the wrong bit by the stop bit. An integer divider at 921,600 baud from 100 MHz is already outside that.</p>
+
+            <h2>Phase accumulator: carry out is the tick</h2>
+<pre><code>wire [PHASE_W:0] sum = {1'b0, acc} + {1'b0, fcw};
+always_ff @(posedge clk) begin
+  acc      &lt;= sum[PHASE_W-1:0];
+  tick16_o &lt;= sum[PHASE_W];          // carry = 16x oversampling tick
+end</code></pre>
+            <p>Each clock adds the frequency control word <code>fcw</code> to a 32-bit accumulator. The carry out of the top bit fires on average <code>fcw / 2<sup>32</sup></code> times per clock, so:</p>
+<pre><code>FCW = round(baud &times; 16 &times; 2<sup>32</sup> / f_clk)</code></pre>
+            <p>The resolution is <code>f_clk / (16 &times; 2<sup>32</sup>)</code>, about 0.0015 baud at 100 MHz. The average rate is effectively exact. Individual ticks are spaced either &lfloor;N&rfloor; or &lceil;N&rceil; clocks apart (54 or 55 clocks at 115,200 baud), so each tick carries up to one clock of jitter. That's about 0.1% of a bit at 115,200 baud (868 clocks per bit) and still only 1% at 1 Mbaud, and it doesn't accumulate.</p>
+
+            <h2>Worked FCW values</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Clock</th><th>Baud</th><th>FCW</th></tr></thead>
+                <tbody>
+                    <tr><td>100 MHz</td><td>115,200</td><td><code>32'h04B7F5A5</code> (79,164,837)</td></tr>
+                    <tr><td>100 MHz</td><td>921,600</td><td><code>32'h25BFAD2A</code> (633,318,698)</td></tr>
+                    <tr><td>100 MHz</td><td>1,000,000</td><td><code>32'h28F5C28F</code> (687,194,767)</td></tr>
+                    <tr><td>50 MHz</td><td>115,200</td><td><code>32'h096FEB4A</code> (158,329,674)</td></tr>
+                </tbody>
+            </table></div>
+            <p>You rarely compute these by hand. <code>uart_top</code> derives the reset value of FCW at elaboration from its <code>CLK_HZ</code> and <code>BAUD</code> parameters, rounding to nearest, and software can change baud rate at run time by writing register <code>0x04</code>. The one hard limit: FCW must fit in 32 bits, so the baud rate must stay below <code>f_clk / 16</code> (6.25 Mbaud at 100 MHz).</p>
+            <p>The carry is registered before it leaves the generator, so the tick costs one flop and a 32-bit adder, with no long combinational path into the transmitter and receiver.</p>
+
+            <h2>The receiver: sampling mid-bit</h2>
+            <p><code>uart_rx</code> runs from the same 16&times; tick:</p>
+            <ul>
+                <li><code>rxd</code> passes through a two-flop synchronizer (<code>async_reg</code>), because the serial line is asynchronous to the FPGA clock.</li>
+                <li>The receiver only arms after it has seen the line idle (high), so a held-low line (a break) doesn't produce a stream of garbage frames.</li>
+                <li>On a falling edge it counts 8 ticks to the middle of the start bit and checks the line is still low. If not, the edge was a glitch and is ignored.</li>
+                <li>From there it samples every 16 ticks, in the middle of each data, parity and stop bit. 5 to 8 data bits and odd or even parity are supported.</li>
+                <li>A low stop bit raises <code>frame_err</code>; a parity mismatch raises <code>parity_err</code>. Both are reported with the received word.</li>
+            </ul>
+            <p>Sampling mid-bit is what tolerates baud mismatch: the sample point can drift almost half a bit over a frame before it lands in the wrong bit. The fractional generator leaves essentially all of that margin for the other end of the link.</p>
+
+            <h2>Registers</h2>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Offset</th><th>Register</th><th>Fields</th></tr></thead>
+                <tbody>
+                    <tr><td><code>0x00</code></td><td>CTRL</td><td>[0] tx_en, [1] rx_en, [2] parity enable, [3] odd parity, [4] two stop bits, [5] loopback, [7:6] data bits (0=8, 1=7, 2=6, 3=5)</td></tr>
+                    <tr><td><code>0x04</code></td><td>FCW</td><td>Baud frequency control word (reset value from <code>CLK_HZ</code>/<code>BAUD</code>)</td></tr>
+                    <tr><td><code>0x08</code></td><td>STATUS</td><td>[0] tx_busy, [1] rx_busy, [2] rx_avail, [8] frame_err, [9] parity_err, [10] overrun (write 1 to clear), [30:16] RX FIFO level</td></tr>
+                    <tr><td><code>0x0C</code></td><td>Error count</td><td>Count of frames received with errors</td></tr>
+                </tbody>
+            </table></div>
+            <p>Data moves over AXI4-Stream: bytes to transmit go in on <code>s_axis</code>, received bytes come out on <code>m_axis</code>. Transmit and receive FIFOs (<code>FIFO_DEPTH</code>, default 512, in block RAM) sit between the streams and the serial logic.</p>
+
+            <h2>Verification and size</h2>
+            <p>The self-checking testbench runs at 1 Mbaud from a 100 MHz clock, a rate an integer divider can't produce accurately. It checks transmit framing and parity with a serial monitor, receive through a serial driver, internal loopback, the error flags with write-1-to-clear, and register readback. Yosys (<code>synth_xilinx</code>, 7-series) estimates the full UART with its AXI4-Lite registers and both FIFOs at about 627 LUTs, 830 flip-flops and 3 BRAM18.</p>
+
+            <h2>Related cores</h2>
+            <ul>
+                <li><a href="../ip/uart/">UART</a>, plus the standalone <a href="../ip/uart-tx/">UART TX</a> and <a href="../ip/uart-rx/">UART RX</a>.</li>
+                <li><a href="../ip/baud-nco/">Baud NCO</a> and <a href="../ip/nco/">NCO</a> &mdash; the same phase-accumulator idea as standalone cores.</li>
+                <li><a href="../ip/baud-generator/">Baud Generator</a> &mdash; programmable tick generator for other serial links.</li>
+            </ul>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>

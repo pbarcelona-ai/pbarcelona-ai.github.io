@@ -1,8 +1,10 @@
 # ***************
 # Filename: deploy-pages.yml
 # Description: Builds and publishes this repository to GitHub Pages
-# on every push to main, and on manual dispatch. Regenerates digital_ip/
-# from the vendor/digital_ip submodule via scripts/build_digital_ip_docs.py.
+# on every push to main, and on manual dispatch. Regenerates the IP pages
+# from the digital_ip submodule (scripts/build_digital_ip_docs.py), adds
+# sitemap/cards/analytics (scripts/finalize_site.py), builds the Pagefind
+# search index, deploys, then pings IndexNow (scripts/indexnow.py).
 # ***************
 name: Deploy Pages
 
@@ -28,11 +30,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0          # full history for sitemap lastmod dates
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Regenerate digital_ip/ from the submodule
+      - name: Install build tools
+        run: python3 -m pip install pillow "pagefind[extended]==1.5.2"
+      - name: Regenerate IP pages from the submodule
         run: python3 scripts/build_digital_ip_docs.py
+      - name: Sitemap, social cards and analytics
+        run: python3 scripts/finalize_site.py
+      - name: Build the search index
+        run: python3 -m pagefind --site .
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
@@ -51,3 +60,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  indexnow:
+    name: Notify search engines (IndexNow)
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Submit URLs from the live sitemap
+        run: python3 scripts/indexnow.py

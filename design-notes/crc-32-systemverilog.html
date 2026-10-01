@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>CRC-32 in SystemVerilog: Parameters, Reflection and Parallel Bytes | FPGA Cores 4U</title>
+    <meta name="description" content="How a parameterized CRC-32 engine works in SystemVerilog: Rocksoft parameters, bit reflection, processing several bytes per clock, partial words and timing.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/crc-32-systemverilog.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="FPGA Cores 4U">
+    <meta property="og:title" content="CRC-32 in SystemVerilog: Parameters, Reflection and Parallel Bytes">
+    <meta property="og:description" content="How a parameterized CRC-32 engine works in SystemVerilog: Rocksoft parameters, bit reflection, processing several bytes per clock, partial words and timing.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/crc-32-systemverilog.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-crc-32-systemverilog.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-crc-32-systemverilog.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CRC-32 in SystemVerilog: Parameters, Reflection and Parallel Bytes">
+    <meta name="twitter:description" content="How a parameterized CRC-32 engine works in SystemVerilog: Rocksoft parameters, bit reflection, processing several bytes per clock, partial words and timing.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "CRC-32 in SystemVerilog: Parameters, Reflection and Parallel Bytes", "url": "https://pbarcelona-ai.github.io/design-notes/crc-32-systemverilog.html", "datePublished": "2026-10-01", "dateModified": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-crc-32-systemverilog.png", "about": "CRC-32 (IEEE 802.3) hardware implementation in SystemVerilog", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: CRC-32 in SystemVerilog: parameters, reflection and parallel bytes", "item": "https://pbarcelona-ai.github.io/design-notes/crc-32-systemverilog.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.92rem; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+        th { color: var(--heading); }
+        .table-wrap { overflow-x: auto; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main data-pagefind-body>
+        <p class="eyebrow">Design notes</p>
+        <h1>CRC-32 in SystemVerilog: parameters, reflection and parallel bytes</h1>
+        <p class="updated">Published <time datetime="2026-10-01">2026-10-01</time></p>
+        <article>
+            <p>These notes cover the <a href="../ip/crc32/">crc32</a> core and the shared <code>crc_core</code> engine behind it, which also drives <a href="../ip/crc16/">CRC-16</a> and <a href="../ip/crc8/">CRC-8</a>. With its default parameters, crc32 computes the CRC used by Ethernet (IEEE 802.3), zlib, gzip and PNG. Overriding a handful of parameters turns it into any other 32-bit CRC.</p>
+
+            <h2>Five parameters describe any CRC</h2>
+            <p>Most published CRC specifications follow the Rocksoft model, and the core uses the same parameter names, so a CRC catalogue entry maps straight onto it:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Parameter</th><th>CRC-32 (default)</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><code>POLY</code></td><td><code>32'h04C11DB7</code></td><td>Generator polynomial, MSB-first form, without the implicit x<sup>32</sup> term</td></tr>
+                    <tr><td><code>INIT</code></td><td><code>32'hFFFFFFFF</code></td><td>Register value at the start of a message (reloaded by <code>init_i</code> and reset)</td></tr>
+                    <tr><td><code>REFIN</code></td><td><code>1</code></td><td>Feed each input byte LSB first</td></tr>
+                    <tr><td><code>REFOUT</code></td><td><code>1</code></td><td>Bit-reverse the register before output</td></tr>
+                    <tr><td><code>XOROUT</code></td><td><code>32'hFFFFFFFF</code></td><td>Final XOR applied to the output</td></tr>
+                </tbody>
+            </table></div>
+            <p>The standard way to confirm a configuration is the <em>check value</em>: the CRC of the ASCII string <code>123456789</code>. For CRC-32 it is <code>0xCBF43926</code>, and the testbench checks exactly that. Other 32-bit CRCs need only parameter overrides:</p>
+<pre><code>// CRC-32C (Castagnoli: iSCSI, SCTP, ext4) - check value 0xE3069283
+crc32 #(.DATA_W(8), .POLY(32'h1EDC6F41)) u_crc32c ( ... );
+
+// CRC-32/MPEG-2 - no reflection, no final XOR - check value 0x0376E6E7
+crc32 #(.DATA_W(8), .REFIN(1'b0), .REFOUT(1'b0), .XOROUT(32'h0)) u_mpeg2 ( ... );</code></pre>
+
+            <h2>Why reflection exists</h2>
+            <p>Ethernet and UARTs send each byte least-significant bit first, while the textbook CRC divides MSB first. "Reflected" CRCs process the bits in wire order. In <code>crc_core</code>, <code>REFIN</code> simply reverses each byte before it enters the shift loop, and <code>REFOUT</code> reverses the 32-bit register before the final XOR. Both are wiring; neither costs any logic.</p>
+
+            <h2>From a bit-serial loop to an XOR tree</h2>
+            <p>The core describes the CRC the obvious way: a function that shifts one byte through the register a bit at a time.</p>
+<pre><code>for (int i = 7; i &gt;= 0; i--) begin
+  fb = r[CRC_W-1] ^ bb[i];
+  r  = {r[CRC_W-2:0], 1'b0};
+  if (fb) r = r ^ POLY;
+end</code></pre>
+            <p>Because <code>POLY</code> is a constant, synthesis unrolls the loop and reduces it to a fixed network of XOR gates. Each output bit becomes the XOR of a few register and data bits. No hand-derived equations or generated tables are involved, so the RTL stays readable and works for any polynomial.</p>
+            <p>For wider buses, the core applies <code>byte_step</code> once per byte lane within a single clock: lane 0 (<code>data_i[7:0]</code>) first, then lane 1, and so on. With <code>DATA_W = 32</code>, a full word is absorbed every clock, which is how the core keeps up with a 32-bit AXI-Stream or a 10G-class datapath.</p>
+
+            <h2>Partial last words</h2>
+            <p>Messages rarely end on a word boundary. <code>keep_i</code> has one bit per byte lane, and lanes with <code>keep_i</code> low are skipped. Valid bytes must be contiguous from lane 0, the same convention as AXI-Stream <code>tkeep</code>, so a 7-byte message on a 32-bit bus is one full word followed by a word with <code>keep_i = 4'b0111</code>. The testbench feeds the check string both ways, byte by byte and as 32-bit words with a partial last word, and both must give <code>0xCBF43926</code>.</p>
+
+            <h2>Interface and latency</h2>
+            <ul>
+                <li><code>init_i</code> reloads <code>INIT</code> at the start of each message. It takes priority over <code>valid_i</code> in the same clock.</li>
+                <li><code>crc_o</code> updates one clock after each <code>valid_i</code>. Reflection and the final XOR are applied combinationally to the running register, so <code>crc_o</code> is always the finished CRC of everything absorbed so far. No separate "finish" step is needed.</li>
+                <li>Idle cycles (<code>valid_i</code> low) leave the register untouched, so the source can stall mid-message.</li>
+            </ul>
+
+            <h2>Timing and size</h2>
+            <p>The logic depth grows with <code>DATA_W</code>: four chained byte steps make a deeper XOR network than one. For CRC-32, <code>DATA_W = 8</code> comfortably meets 100 MHz on 7-series parts. At 32 bits per clock, check timing for your target, and consider a lower clock or a pipelined variant if it doesn't close. At the default byte-wide configuration, Yosys (<code>synth_xilinx</code>, 7-series) estimates about 100 LUTs and 64 flip-flops.</p>
+
+            <h2>Verification</h2>
+            <p>The testbench runs a byte-wide and a 32-bit-wide instance side by side. Both check the standard check value, then 300 random messages of random length are compared against a separate bit-serial reference model. The run covers <code>init_i</code> mid-stream and idle cycles between words.</p>
+
+            <h2>Related cores</h2>
+            <ul>
+                <li><a href="../ip/crc32/">CRC-32</a>, <a href="../ip/crc16/">CRC-16</a> (CCITT-FALSE) and <a href="../ip/crc8/">CRC-8</a> &mdash; the three wrappers around <code>crc_core</code>.</li>
+                <li><a href="../ip/checksum/">Checksum</a>, <a href="../ip/parity-gen/">parity generator</a> and <a href="../ip/ecc-memory-ctrl/">ECC memory controller</a> &mdash; other data-integrity options.</li>
+                <li><a href="../ip/packet-formatter/">Packet formatter</a> and <a href="../ip/packet-parser/">packet parser</a> &mdash; where a CRC usually ends up in a streaming design.</li>
+            </ul>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>

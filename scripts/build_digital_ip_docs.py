@@ -1,20 +1,28 @@
 #!/usr/bin/env python3
-"""Enhance the digital_ip/ submodule's generated catalog pages in place.
+"""Builds the site's IP pages from the digital_ip/ submodule's generated catalog.
 
 Regenerates the catalog with the submodule's own generators (writing into
 digital_ip/ip/docs/ and digital_ip/ip/tools/docs/, as that project already
 does), strips links to full RTL source (replacing them with header+port-list
 snippets and shared-module snippets extracted from the submodule), and
-layers on this site's SEO/navigation conventions (search-friendly titles and
-short descriptions, canonical/OG/Twitter tags, SoftwareSourceCode JSON-LD,
-favicon, breadcrumbs, per-category "typical applications" + related-module
-links). The per-module copies under ip/<category>/<module>/docs/ get a
-canonical link to the catalog page, and the site's index.html IP index
-(between the IP-INDEX markers) is regenerated from the catalog.
+layers on this site's SEO/navigation conventions:
+
+- each module page is published at a short URL, /ip/<module-name>/, with a
+  <base> pointing back at its generated folder so relative assets resolve;
+  the old digital_ip/ip/docs/... pages become redirect stubs, and the
+  per-module copies under ip/<category>/<module>/docs/ get a canonical link;
+- search-friendly titles and short descriptions, canonical/OG/Twitter tags,
+  a social card per core (og/<name>.png), SoftwareSourceCode and breadcrumb
+  JSON-LD, favicon;
+- a datasheet section (clocking/reset/latency from the RTL header, Yosys
+  utilization from docs/STATUS.md, parameters), the RTL hierarchy diagram,
+  version and last-updated date, "typical applications" + related modules;
+- the catalog is published at /ip/, and the site's index.html IP index
+  (between the IP-INDEX markers) is regenerated from it.
 
 digital_ip/ is a git submodule (see .gitmodules); this script never commits
 to it, it only rewrites the working tree so the GitHub Pages build can
-publish it directly.
+publish it directly. Generated output (ip/, og/) is gitignored.
 
 Usage: python3 scripts/build_digital_ip_docs.py
 """
@@ -26,6 +34,9 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from og_cards import make_card  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SUBMODULE_ROOT = REPO_ROOT / "digital_ip"
@@ -61,9 +72,20 @@ HOME_CATEGORIES = {
 }
 
 # Long-form design notes, linked from the matching module pages.
+_NOTE_ASYNC = ("/design-notes/async-fifo-gray-code-cdc.html", "Design notes: async FIFO and Gray-code CDC")
+_NOTE_CRC = ("/design-notes/crc-32-systemverilog.html", "Design notes: CRC-32 parameters, reflection and parallel bytes")
+_NOTE_RESET = ("/design-notes/reset-synchronizer.html", "Design notes: asynchronous assert, synchronous release")
+_NOTE_UART = ("/design-notes/uart-fractional-baud-generator.html", "Design notes: UART fractional baud generator")
+_NOTE_SCALER = ("/design-notes/fpga-image-scaler-comparison.html", "Design notes: nearest vs bilinear vs bicubic vs Lanczos")
 DESIGN_NOTES = {
-    "async_fifo": ("/design-notes/async-fifo-gray-code-cdc.html", "Design notes: async FIFO and Gray-code CDC"),
+    "async_fifo": _NOTE_ASYNC,
+    "axis_async_bridge": _NOTE_ASYNC,
     "axi_stream_width_converter": ("/design-notes/axi-stream-width-converter.html", "Design notes: AXI-Stream width converter"),
+    "crc32": _NOTE_CRC, "crc16": _NOTE_CRC, "crc8": _NOTE_CRC,
+    "reset_sync": _NOTE_RESET, "reset_ctrl": _NOTE_RESET,
+    "uart": _NOTE_UART, "uart_rx": _NOTE_UART, "uart_tx": _NOTE_UART, "baud_nco": _NOTE_UART,
+    **{m: _NOTE_SCALER for m in ("scaler_nearest", "scaler_bilinear", "scaler_bicubic", "scaler_lanczos",
+                                 "scaler_polyphase", "scaler_dda", "banked_framebuf", "scaler_ctrl")},
 }
 
 # Tokens in module directory names that need special casing in titles.
@@ -324,7 +346,8 @@ def apply_module_title(content: str, pretty: str, desc: str) -> str:
     return re.sub(r"<h1>.*?</h1>", lambda _: f"<h1>{html.escape(pretty, quote=False)}</h1>", content, count=1, flags=re.S)
 
 
-def add_software_jsonld(content: str, pretty: str, desc: str, canonical_url: str, category: str) -> str:
+def add_software_jsonld(content: str, pretty: str, desc: str, canonical_url: str, category: str,
+                        version: str | None = None, date: str | None = None, image: str | None = None) -> str:
     if "SoftwareSourceCode" in content or "</head>" not in content:
         return content
     data = {
@@ -336,10 +359,224 @@ def add_software_jsonld(content: str, pretty: str, desc: str, canonical_url: str
         "programmingLanguage": "SystemVerilog",
         "codeRepository": "https://github.com/pbarcelona-ai/digital_ip",
         "keywords": f"{category}, SystemVerilog, Verilog, FPGA, ASIC, RTL, IP core",
+        "license": "https://opensource.org/licenses/MIT",
         "author": {"@type": "Organization", "name": "FPGA Cores 4U", "url": f"{BASE_URL}/"},
     }
+    if version:
+        data["version"] = version
+    if date:
+        data["dateModified"] = date
+    if image:
+        data["image"] = image
     snippet = f'<script type="application/ld+json">{json.dumps(data)}</script>'
     return content.replace("</head>", snippet + "</head>", 1)
+
+
+def slug(module: str) -> str:
+    return module.replace("_", "-")
+
+
+def ip_path(module: str) -> str:
+    """Short public URL path of a module page: /ip/async-fifo/."""
+    return f"/ip/{slug(module)}/"
+
+
+CATALOG_PATH = "/ip/"
+CATALOG_URL = f"{BASE_URL}{CATALOG_PATH}"
+OG_DIR = REPO_ROOT / "og"
+
+HEADER_FIELD_RE = re.compile(r"\b(Clocks?|Reset|Latency|Throughput|Timing|Errors)\s+-\s+")
+FIELD_LABELS = {"Clock": "Clocking", "Reset": "Reset", "Latency": "Latency",
+                "Throughput": "Throughput", "Timing": "Timing constraints", "Errors": "Error handling"}
+
+PAGE_STYLE = (
+    "<style>"
+    ".spec-table{width:100%;border-collapse:collapse;margin:8px 0 24px;font-size:13px}"
+    ".spec-table th,.spec-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}"
+    ".spec-table th{color:var(--heading);font-weight:600;white-space:nowrap;width:1%}"
+    ".spec-table code{background:var(--code-bg);padding:1px 5px;border-radius:3px}"
+    ".diagram{margin:8px 0 24px;padding:16px;background:#fff;border-radius:6px;overflow-x:auto}"
+    ".diagram img{display:block;max-width:100%;height:auto;margin:0 auto}"
+    ".topnav{display:flex;gap:16px}"
+    ".updated{margin:12px 0 0;font-size:12px}"
+    "</style>"
+)
+
+
+def split_header(desc: str) -> tuple[str, str | None, dict[str, str]]:
+    """RTL header description -> (narrative, version, {Clock/Reset/Latency/...: text})."""
+    text = re.sub(r"([a-z])- ([a-z])", r"\1-\2", " ".join(desc.split()))
+    vm = re.search(r"\bVersion (\d+\.\d+\.\d+)", text)
+    text = re.sub(r"\s*\bVersion \d+\.\d+\.\d+\.?", "", text)
+    parts = HEADER_FIELD_RE.split(text)
+    fields: dict[str, str] = {}
+    for key, value in zip(parts[1::2], parts[2::2]):
+        key = "Clock" if key.startswith("Clock") else key
+        value = value.strip()
+        value = value[:1].upper() + value[1:]
+        fields[key] = f"{fields[key]} {value}" if key in fields else value
+    return parts[0].strip(), (vm.group(1) if vm else None), fields
+
+
+def load_status() -> dict[str, dict[str, str]]:
+    """Per-IP simulation/synthesis results from the submodule's STATUS.md table."""
+    path = OUT_ROOT / "docs" / "STATUS.md"
+    rows: dict[str, dict[str, str]] = {}
+    if not path.is_file():
+        return rows
+    for line in path.read_text(encoding="utf-8").splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 8 and re.fullmatch(r"[a-z0-9_]+", cells[0]):
+            rows[cells[0]] = dict(zip(("sim", "yosys", "lut", "ff", "bram", "dsp"), cells[2:8]))
+    # scaler family: results table in SCALER_README.md
+    # | Module | Parameters | LUT | LUT RAM | FF | CARRY4 | BRAM36 | DSP48E1 | Time (s) |
+    scaler_readme = OUT_ROOT / "SCALER_README.md"
+    if scaler_readme.is_file():
+        for line in scaler_readme.read_text(encoding="utf-8").splitlines():
+            cells = [c.strip().replace(",", "") for c in line.strip().strip("|").split("|")]
+            m = re.fullmatch(r"([a-z0-9_]+)\s*(?:\((.*)\))?", cells[0]) if len(cells) == 9 else None
+            if m and cells[2].isdigit() and m.group(1) not in rows:
+                config = ", ".join(c for c in (cells[1].replace("\u00d7", "x"), m.group(2)) if c)
+                rows[m.group(1)] = {"lut": cells[2], "ff": cells[4], "bram": f"0/{cells[6]}", "dsp": cells[7],
+                                    "config": config}
+    return rows
+
+
+def utilization_text(row: dict[str, str] | None, sep: str = " · ") -> str:
+    if not row or not row.get("lut", "").isdigit():
+        return ""
+    parts = [f"{row['lut']} LUT", f"{row['ff']} FF"]
+    b18, _, b36 = row.get("bram", "0/0").partition("/")
+    if b18.strip() not in ("", "0"):
+        parts.append(f"{b18.strip()} BRAM18")
+    if b36.strip() not in ("", "0"):
+        parts.append(f"{b36.strip()} BRAM36")
+    if row.get("dsp", "0") not in ("", "0"):
+        parts.append(f"{row['dsp']} DSP")
+    return sep.join(parts)
+
+
+def parse_parameters(snippet: Path) -> list[tuple[str, str, str]]:
+    """(name, default, comment) for each parameter in the module header snippet."""
+    if not snippet.is_file():
+        return []
+    out = []
+    for line in snippet.read_text(encoding="utf-8").splitlines():
+        code, _, comment = line.partition("//")
+        m = re.match(r"\s*parameter\s+(?:(?:int|integer|logic|bit|real|string)\b\s*(?:(?:un)?signed\s*)?(?:\[[^\]]*\]\s*)?)?(\w+)\s*=\s*(.+?)\s*,?\s*$", code)
+        if m:
+            value = m.group(2).rstrip(",").strip()
+            out.append((m.group(1), value if len(value) <= 48 else value[:45] + "…", comment.strip()))
+    return out
+
+
+def header_date(src: Path | None) -> str | None:
+    if not src or not src.is_file():
+        return None
+    m = re.search(r"^// Date:\s*(\d{4}-\d{2}-\d{2})", src.read_text(encoding="utf-8", errors="replace"), re.M)
+    return m.group(1) if m else None
+
+
+def diagram_section(category_dir: str, module: str, pretty: str) -> str:
+    """Embeds the RTL hierarchy SVG when the core has submodules worth showing."""
+    docs = SUBMODULE_IP / category_dir / module / "docs"
+    svg, dot = docs / "block_diagram.svg", docs / "block_diagram.dot"
+    if not svg.is_file() or not dot.is_file():
+        return ""
+    nodes = re.findall(r'label="([^"\\]+)\\n\(([^)]+)\)"', dot.read_text(encoding="utf-8"))
+    if len(nodes) < 2:
+        return ""
+    top = nodes[0][0]
+    children = ", ".join(f"{name} ({inst})" for name, inst in nodes[1:])
+    alt = f"RTL hierarchy of the {pretty} SystemVerilog IP core: {top} instantiates {children}."
+    head = svg.read_text(encoding="utf-8")[:2000]
+    wm, hm = re.search(r'width="([\d.]+)pt"', head), re.search(r'height="([\d.]+)pt"', head)
+    size = f' width="{round(float(wm.group(1)) * 4 / 3)}" height="{round(float(hm.group(1)) * 4 / 3)}"' if wm and hm else ""
+    src = f"/digital_ip/ip/{category_dir}/{module}/docs/block_diagram.svg"
+    return (
+        '<section class="content"><article>'
+        '<p class="eyebrow">Architecture</p><h2>RTL hierarchy</h2>'
+        f'<figure class="diagram"><img src="{src}" alt="{html.escape(alt, quote=True)}"{size} loading="lazy"></figure>'
+        '</article></section>'
+    )
+
+
+def spec_section(fields: dict[str, str], version: str | None, date: str | None,
+                 status: dict[str, str] | None, params: list[tuple[str, str, str]]) -> str:
+    rows = [("Language", "Synthesizable SystemVerilog (IEEE 1800-2017)")]
+    if version:
+        rows.append(("Version", f"{version} (updated {date})" if date else version))
+    elif date:
+        rows.append(("Last updated", date))
+    for key, label in FIELD_LABELS.items():
+        if key in fields:
+            rows.append((label, html.escape(fields[key], quote=False)))
+    util = utilization_text(status, " / ")
+    if util:
+        cfg = status.get("config", "") if status else ""
+        cfg = "default parameters" if cfg in ("", "(defaults)") else html.escape(cfg)
+        rows.append(("Utilization", f'{util} <span class="quiet">(Yosys 0.33 synth_xilinx, 7-series, {cfg})</span>'))
+    if status and status.get("sim") == "PASS":
+        rows.append(("Verification", "Self-checking testbench, passing on Icarus Verilog 12"))
+    rows.append(("License", "MIT"))
+    body = "".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in rows)
+    out = ('<section class="content"><article>'
+           '<p class="eyebrow">Datasheet</p><h2>Key specifications</h2>'
+           f'<table class="spec-table"><tbody>{body}</tbody></table>')
+    if params:
+        prow = "".join(f"<tr><td><code>{html.escape(n)}</code></td><td><code>{html.escape(v)}</code></td>"
+                       f"<td>{html.escape(c)}</td></tr>" for n, v, c in params)
+        out += ('<h2>Parameters</h2><table class="spec-table"><thead><tr><th>Parameter</th><th>Default</th>'
+                f'<th>Notes</th></tr></thead><tbody>{prow}</tbody></table>')
+    return out + "</article></section>"
+
+
+def enhance_module_body(content: str, narrative: str, version: str | None, date: str | None,
+                        extra_sections: str) -> str:
+    """Shorter lede, visible version/date, spec + diagram sections after the hero, site navigation."""
+    lede = html.escape(narrative, quote=False)
+    content = re.sub(r'<p class="lede">.*?</p>', lambda _: f'<p class="lede">{lede}</p>', content, count=1, flags=re.S)
+    if date:
+        stamp = (f'<p class="quiet updated">{"Version " + version + " &middot; " if version else ""}'
+                 f'Last updated <time datetime="{date}">{date}</time></p>')
+        content = re.sub(r'(<p class="lede">.*?</p>)', lambda m: m.group(1) + stamp, content, count=1, flags=re.S)
+    content = re.sub(r'(<section class="hero">.*?</section>)', lambda m: m.group(1) + extra_sections, content, count=1, flags=re.S)
+    content = content.replace('href="../digital_ip_catalog.html"', f'href="{CATALOG_PATH}"')
+    return add_site_nav(content).replace("</head>", PAGE_STYLE + "</head>", 1)
+
+
+def add_site_nav(content: str) -> str:
+    """Adds a Search link next to the topbar's existing right-hand link."""
+    return re.sub(r'(<header class="topbar">\s*<a class="brand"[^>]*>.*?</a>)\s*(<a [^>]*>[^<]*</a>)\s*(</header>)',
+                  lambda m: f'{m.group(1)}<span class="topnav"><a href="/search.html">Search</a>{m.group(2)}</span>{m.group(3)}',
+                  content, count=1, flags=re.S)
+
+
+def redirect_stub(target_path: str, title: str) -> str:
+    url = f"{BASE_URL}{target_path}"
+    return (
+        '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
+        f'<title>{html.escape(title)} | FPGA Cores 4U</title>'
+        f'<link rel="canonical" href="{url}">'
+        f'<meta http-equiv="refresh" content="0; url={target_path}">'
+        '</head><body>'
+        f'<p>This page has moved to <a href="{target_path}">{url}</a>.</p>'
+        '</body></html>\n'
+    )
+
+
+def publish_short_url(content: str, source_dir: str, target_path: str) -> None:
+    """Writes the page at its short URL. <base> keeps its relative asset links resolving to source_dir."""
+    content = content.replace("<head>", f'<head><base href="{source_dir}">', 1)
+    content = re.sub(r'<main class="((?:page-)?shell)">', r'<main class="\1" data-pagefind-body>', content, count=1)
+    out = REPO_ROOT / target_path.strip("/") / "index.html"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(content, encoding="utf-8")
+
+
+def set_og_image(content: str, image_url: str) -> str:
+    content = re.sub(r'(<meta property="og:image" content=")[^"]*', lambda m: m.group(1) + image_url, content, count=1)
+    return re.sub(r'(<meta name="twitter:image" content=")[^"]*', lambda m: m.group(1) + image_url, content, count=1)
 
 
 def add_canonical_only(content: str, canonical_url: str) -> str:
@@ -349,14 +586,14 @@ def add_canonical_only(content: str, canonical_url: str) -> str:
 
 
 def canonicalize_per_module_copies() -> int:
-    """ip/<category>/<module>/docs/index.html duplicates ip/docs/<module>/index.html; point it there."""
+    """ip/<category>/<module>/docs/index.html duplicates the module page; point it at the short URL."""
     count = 0
     for page in SUBMODULE_IP.glob("*/*/docs/index.html"):
         module = page.parent.parent.name
         if not (OUT_ROOT / "docs" / module / "index.html").is_file():
             continue
         content = page.read_text(encoding="utf-8")
-        new = add_canonical_only(content, f"{BASE_URL}/digital_ip/ip/docs/{module}/index.html")
+        new = add_canonical_only(content, f"{BASE_URL}{ip_path(module)}")
         if new != content:
             page.write_text(new, encoding="utf-8")
             count += 1
@@ -376,7 +613,7 @@ def update_home_page(categories: dict[str, list[str]], titles: dict[str, str]) -
         if not mods:
             continue
         heading, intro = HOME_CATEGORIES.get(category, (category, ""))
-        links = "".join(f'<li><a href="digital_ip/ip/docs/{m}/index.html">{titles.get(m, m)}</a></li>' for m in mods)
+        links = "".join(f'<li><a href="{ip_path(m).lstrip("/")}">{titles.get(m, m)}</a></li>' for m in mods)
         parts.append(f'<section class="ip-category"><h3>{heading}</h3><p>{intro}</p><ul class="ip-list">{links}</ul></section>')
     block = start + "\n" + "\n".join(parts) + "\n" + end
     content = re.sub(re.escape(start) + r".*?" + re.escape(end), lambda _: block, content, count=1, flags=re.S)
@@ -396,11 +633,10 @@ def add_breadcrumbs(content: str, module: str | None, canonical_url: str) -> str
     if "BreadcrumbList" in content:
         return content
     items = [{"@type": "ListItem", "position": 1, "name": "Home", "item": f"{BASE_URL}/"}]
-    catalog_url = f"{BASE_URL}/digital_ip/ip/docs/index.html"
     if module is None:
-        items.append({"@type": "ListItem", "position": 2, "name": "Digital IP Catalog", "item": canonical_url})
+        items.append({"@type": "ListItem", "position": 2, "name": "SystemVerilog IP Catalog", "item": canonical_url})
     else:
-        items.append({"@type": "ListItem", "position": 2, "name": "Digital IP Catalog", "item": catalog_url})
+        items.append({"@type": "ListItem", "position": 2, "name": "SystemVerilog IP Catalog", "item": CATALOG_URL})
         items.append({"@type": "ListItem", "position": 3, "name": module, "item": canonical_url})
     data = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": items}
     snippet = f'<script type="application/ld+json">{json.dumps(data)}</script>'
@@ -412,7 +648,7 @@ def add_breadcrumbs(content: str, module: str | None, canonical_url: str) -> str
 def add_typical_applications(content: str, category: str, module: str, siblings: list[str], titles: dict[str, str]) -> str:
     if "Typical applications" in content or not siblings:
         return content
-    links = "".join(f'<li><a href="../{s}/index.html">{titles.get(s, s)}</a></li>' for s in siblings[:5])
+    links = "".join(f'<li><a href="{ip_path(s)}">{titles.get(s, s)}</a></li>' for s in siblings[:5])
     note = DESIGN_NOTES.get(module)
     notes = f'<h2>Design notes</h2><p><a href="{note[0]}">{note[1]}</a></p>' if note else ""
     section = (
@@ -442,7 +678,9 @@ def main() -> None:
     shared_written = generate_shared_snippets(shared_names)
 
     titles = {module: pretty_name(module) for module in module_to_category}
+    status = load_status()
 
+    published = 0
     for module, category in module_to_category.items():
         page = OUT_ROOT / "docs" / module / "index.html"
         if not page.is_file():
@@ -453,42 +691,88 @@ def main() -> None:
         content = strip_verification_paths(content)
         if own_basename:
             content = add_module_decl_link(content, module)
-        canonical = f"{BASE_URL}/digital_ip/ip/docs/{module}/index.html"
+
+        pretty, cat_dir = titles[module], category.lower()
+        canonical = f"{BASE_URL}{ip_path(module)}"
         dm = re.search(r'<meta name="description" content="([^"]*)"', content)
-        desc = short_description(html.unescape(dm.group(1)) if dm else f"{titles[module]} IP core.")
-        content = apply_module_title(content, titles[module], desc)
+        full = html.unescape(dm.group(1)) if dm else f"{pretty} IP core."
+        narrative, version, fields = split_header(full)
+        desc = short_description(full)
+        date = header_date(resolve_primary_source(cat_dir, module))
+        card = f"{BASE_URL}/og/{slug(module)}.png"
+        make_card(OG_DIR / f"{slug(module)}.png", pretty, f"SystemVerilog IP core \u00b7 {category}",
+                  desc, utilization_text(status.get(module)))
+
+        content = apply_module_title(content, pretty, desc)
         content = add_seo_tags(content, canonical)
-        content = add_software_jsonld(content, titles[module], desc, canonical, category)
+        content = set_og_image(content, card)
+        content = add_software_jsonld(content, pretty, desc, canonical, category, version, date, card)
         content = add_favicon_and_theme(content)
-        content = add_breadcrumbs(content, titles.get(module, module), canonical)
+        content = add_breadcrumbs(content, pretty, canonical)
         siblings = [m for m in categories.get(category, []) if m != module]
         content = add_typical_applications(content, category, module, siblings, titles)
-        page.write_text(content, encoding="utf-8")
+        extra = (spec_section(fields, version, date, status.get(module),
+                              parse_parameters(OUT_ROOT / "docs" / module / f"{module}.sv"))
+                 + diagram_section(cat_dir, module, pretty))
+        content = enhance_module_body(content, narrative or desc, version, date, extra)
 
-    # Catalog + scaler catalog pages: SEO tags, favicon, breadcrumbs only.
-    for page, canonical in (
-        (OUT_ROOT / "docs" / "index.html", f"{BASE_URL}/digital_ip/ip/docs/index.html"),
-        (OUT_ROOT / "tools" / "docs" / "index.html", f"{BASE_URL}/digital_ip/ip/tools/docs/index.html"),
-    ):
-        if not page.is_file():
-            continue
-        content = page.read_text(encoding="utf-8")
+        publish_short_url(content, f"/digital_ip/ip/docs/{module}/", ip_path(module))
+        page.write_text(redirect_stub(ip_path(module), pretty), encoding="utf-8")
+        published += 1
+
+    # Catalog: published at /ip/, old locations redirect there.
+    n = len(module_to_category)
+    content = re.sub(r'href="([a-z0-9_]+)/index\.html">([^<]*)</a>',
+                     lambda m: f'href="{ip_path(m.group(1))}">{titles[m.group(1)]}</a>' if m.group(1) in module_to_category else m.group(0),
+                     catalog_html)
+    title = f"SystemVerilog IP Core Catalog \u2013 {n} FPGA/ASIC Cores | FPGA Cores 4U"
+    desc = (f"Catalog of {n} synthesizable SystemVerilog IP cores for FPGA and ASIC: AXI interconnect, CDC, "
+            "FIFOs, DSP, CRC/ECC, memories, peripherals, timers and video scalers. MIT licensed.")
+    content = re.sub(r"<title>.*?</title>", lambda _: f"<title>{html.escape(title, quote=False)}</title>", content, count=1, flags=re.S)
+    content = re.sub(r'<meta name="description" content="[^"]*">',
+                     lambda _: f'<meta name="description" content="{html.escape(desc)}">', content, count=1)
+    content = re.sub(r"<h1>.*?</h1>", "<h1>SystemVerilog IP cores</h1>", content, count=1, flags=re.S)
+    content = re.sub(r"<link rel=\"canonical\"[^>]*>", "", content)   # replaced by add_seo_tags below
+    content = re.sub(r'<meta (?:property|name)="(?:og|twitter):[^"]*" content="[^"]*">', "", content)
+    content = add_seo_tags(content, CATALOG_URL)
+    make_card(OG_DIR / "catalog.png", "SystemVerilog IP Core Catalog", "FPGA Cores 4U \u00b7 MIT licensed",
+              f"{n} synthesizable cores for FPGA and ASIC: AXI interconnect, CDC, FIFOs, DSP, CRC/ECC, peripherals, timers and video scalers.")
+    content = set_og_image(content, f"{BASE_URL}/og/catalog.png")
+    content = add_favicon_and_theme(content)
+    content = add_breadcrumbs(content, None, CATALOG_URL)
+    content = content.replace('<a class="brand" href="index.html">', f'<a class="brand" href="{CATALOG_PATH}">', 1)
+    content = add_site_nav(content)
+    content = content.replace('<div class="actions">', '<div class="actions"><a href="/search.html">Search all cores</a>', 1)
+    publish_short_url(content.replace("</head>", PAGE_STYLE + "</head>", 1), "/digital_ip/ip/docs/", CATALOG_PATH)
+    catalog_path.write_text(redirect_stub(CATALOG_PATH, "SystemVerilog IP catalog"), encoding="utf-8")
+    hosted_copy = OUT_ROOT / "docs" / "digital_ip_catalog.html"
+    if hosted_copy.is_file():
+        hosted_copy.write_text(redirect_stub(CATALOG_PATH, "SystemVerilog IP catalog"), encoding="utf-8")
+
+    # Scaler atlas: stays at its URL; module links go straight to the short URLs.
+    atlas = OUT_ROOT / "tools" / "docs" / "index.html"
+    if atlas.is_file():
+        canonical = f"{BASE_URL}/digital_ip/ip/tools/docs/index.html"
+        content = atlas.read_text(encoding="utf-8")
+        content = re.sub(r'href="\.\./\.\./docs/([a-z0-9_]+)/index\.html"', lambda m: f'href="{ip_path(m.group(1))}"', content)
         content = add_seo_tags(content, canonical)
         content = add_favicon_and_theme(content)
         content = add_breadcrumbs(content, None, canonical)
-        page.write_text(content, encoding="utf-8")
+        content = content.replace("<body", "<body data-pagefind-body", 1)
+        atlas.write_text(content, encoding="utf-8")
 
     # Vision-system microsite: self-canonical + OG tags.
     for page in sorted((SUBMODULE_ROOT / "image_processing" / "vision_system" / "docs" / "site").glob("*.html")):
         rel = page.relative_to(REPO_ROOT).as_posix()
         content = page.read_text(encoding="utf-8")
         content = add_seo_tags(content, f"{BASE_URL}/{rel}")
+        content = content.replace("<body", "<body data-pagefind-body", 1)
         page.write_text(content, encoding="utf-8")
 
     copies = canonicalize_per_module_copies()
     update_home_page(categories, titles)
 
-    print(f"[build] done: {len(module_to_category)} module pages, "
+    print(f"[build] done: {published} module pages published under /ip/, "
           f"{len(resolved)} module snippets, {len(shared_written)} shared snippets, "
           f"{copies} per-module copies canonicalized")
 

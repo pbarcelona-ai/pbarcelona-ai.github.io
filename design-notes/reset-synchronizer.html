@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>Reset Synchronizer: Asynchronous Assert, Synchronous Release | FPGA Cores 4U</title>
+    <meta name="description" content="Why FPGA and ASIC resets should assert asynchronously and release synchronously, how a reset synchronizer does it in SystemVerilog, and how to constrain it.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/reset-synchronizer.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="FPGA Cores 4U">
+    <meta property="og:title" content="Reset Synchronizer in SystemVerilog: Asynchronous Assert, Synchronous Release">
+    <meta property="og:description" content="Why FPGA and ASIC resets should assert asynchronously and release synchronously, how a reset synchronizer does it in SystemVerilog, and how to constrain it.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/reset-synchronizer.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-reset-synchronizer.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-reset-synchronizer.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Reset Synchronizer in SystemVerilog: Asynchronous Assert, Synchronous Release">
+    <meta name="twitter:description" content="Why FPGA and ASIC resets should assert asynchronously and release synchronously, how a reset synchronizer does it in SystemVerilog, and how to constrain it.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Reset Synchronizer in SystemVerilog: Asynchronous Assert, Synchronous Release", "url": "https://pbarcelona-ai.github.io/design-notes/reset-synchronizer.html", "datePublished": "2026-10-01", "dateModified": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-reset-synchronizer.png", "about": "Reset synchronizer design for FPGA and ASIC in SystemVerilog", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: Reset synchronizers: asynchronous assert, synchronous release", "item": "https://pbarcelona-ai.github.io/design-notes/reset-synchronizer.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.92rem; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+        th { color: var(--heading); }
+        .table-wrap { overflow-x: auto; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main data-pagefind-body>
+        <p class="eyebrow">Design notes</p>
+        <h1>Reset synchronizers: asynchronous assert, synchronous release</h1>
+        <p class="updated">Published <time datetime="2026-10-01">2026-10-01</time></p>
+        <article>
+            <p>These notes cover <a href="../ip/reset-sync/">reset_sync</a>, the library's basic reset synchronizer, and <a href="../ip/reset-ctrl/">reset_ctrl</a>, a reset controller built on the same idea that adds pulse stretching, fan-out and software control. Every clock domain in a design needs one of these between its reset source and its logic.</p>
+
+            <h2>The problem is the release, not the assert</h2>
+            <p>A reset usually comes from somewhere with no relationship to your clock: a push button, a PLL lock signal, a power-on detector, another clock domain. Asserting it at any moment is harmless, because every flop simply goes to its reset value. Releasing it is different. If reset deasserts close to a clock edge, it violates the flops' <em>recovery and removal</em> times, the reset equivalent of setup and hold. Some flops then leave reset on this clock edge and others on the next, and a state machine can start in a state that should be impossible.</p>
+            <p>The standard fix: <strong>assert asynchronously, release synchronously</strong>. The design enters reset immediately, even with no clock running, and leaves it on a clean clock edge that every flop sees together.</p>
+
+            <h2>How reset_sync does it</h2>
+<pre><code>(* async_reg = "true", shreg_extract = "no" *) logic [STAGES-1:0] sr;
+
+always_ff @(posedge clk or posedge asserted)
+  if (asserted) sr &lt;= '0;                       // assert: immediate, no clock needed
+  else          sr &lt;= {sr[STAGES-2:0], 1'b1};    // release: shift a 1 through STAGES flops
+
+assign rst_o = ACTIVE_LOW_OUT ? sr[STAGES-1] : ~sr[STAGES-1];</code></pre>
+            <p>While the input reset is active, every stage is held clear and <code>rst_o</code> is asserted. When the input releases, a constant 1 shifts through the chain. The first flop may go metastable, because its asynchronous clear was just removed at an arbitrary time, but it has a full clock period to settle before the next stage samples it. <code>rst_o</code> deasserts exactly <code>STAGES</code> clocks later, synchronous to <code>clk</code>. The testbench checks that count exactly.</p>
+            <ul>
+                <li><code>STAGES</code> (default 2, minimum 2) trades release latency for mean time between failures. Use 3 for very fast clocks or high-reliability designs.</li>
+                <li><code>ACTIVE_LOW_IN</code> / <code>ACTIVE_LOW_OUT</code> set each side's polarity independently, so a low-true board reset can drive high-true internal logic without an extra inverter stage.</li>
+                <li><code>async_reg</code> tells Vivado to place the chain's flops close together and treat them as a synchronizer. <code>shreg_extract = "no"</code> stops it from packing the chain into an SRL shift register, which would defeat the purpose.</li>
+            </ul>
+
+            <h2>The fully synchronous option</h2>
+            <p><code>ASYNC_ASSERT = 0</code> builds the same chain with a synchronous clear. Some ASIC flows and coding standards forbid asynchronous resets entirely, and some FPGA guidelines prefer synchronous resets so the tools can use the flops' synchronous set/reset pins. The trade-off: assertion now needs a running clock, and the input should be held for at least one clock and be free of glitches, since it drives the flops' clear directly.</p>
+
+            <h2>Constraining it</h2>
+            <p>The input path into the chain is asynchronous by design. Tell the timing tool so, and keep everything after the chain fully timed:</p>
+<pre><code># Vivado (XDC): the external reset into the synchronizer is asynchronous
+set_false_path -to [get_pins -hier -filter {NAME =~ *u_rst_sync*/sr_reg*/CLR}]
+# rst_o is synchronous to clk: leave its recovery/removal checks in place</code></pre>
+            <p>Adjust the instance name to your hierarchy (the pin is <code>PRE</code> instead of <code>CLR</code> if your synthesis maps the chain the other way). Don't put a false path on <code>rst_o</code> itself; its release timing is the whole point.</p>
+
+            <h2>One synchronizer per clock domain</h2>
+            <p>A synchronized reset is only synchronous to the clock that produced it. A design with an AXI clock, a video clock and a SerDes clock needs three synchronizers, each fed by the same raw reset and clocked by its own domain. That's also why the <a href="async-fifo-gray-code-cdc.html">async FIFO</a> asks for its write and read resets to be asserted together but synchronized separately.</p>
+
+            <h2>When you need more: reset_ctrl</h2>
+            <p><a href="../ip/reset-ctrl/">reset_ctrl</a> wraps the same asynchronous-assert/synchronous-release chain (default <code>STAGES = 3</code>) with the features a real system reset usually needs:</p>
+            <ul>
+                <li><strong>Pulse stretching.</strong> The output stays asserted for at least <code>HOLD</code> clocks (default 16, programmable at register <code>0x04</code>), so a short glitch on the input still produces a clean, full-length reset.</li>
+                <li><strong>Replicated outputs.</strong> <code>NUM_OUT</code> separate synchronized copies (default 4) split the fan-out of a heavily loaded reset net, which helps timing on large designs.</li>
+                <li><strong>Software reset and visibility.</strong> AXI4-Lite registers provide a self-clearing soft-reset bit (<code>0x00</code>), status with a sticky "reset event seen" flag (<code>0x08</code>, write-1-to-clear), and a reset event counter (<code>0x0C</code>).</li>
+            </ul>
+            <p>Release takes <code>STAGES + 1</code> clocks after the input deasserts, plus the hold time.</p>
+
+            <h2>Cost</h2>
+            <p>reset_sync is the cheapest core in the library: Yosys (<code>synth_xilinx</code>, 7-series) maps the default configuration to two flip-flops and no LUTs. reset_ctrl, with its register file, counters and four outputs, comes to about 460 LUTs and 705 flip-flops.</p>
+
+            <h2>Related cores</h2>
+            <ul>
+                <li><a href="../ip/reset-sync/">Reset Sync</a> and <a href="../ip/reset-ctrl/">Reset Controller</a> &mdash; the two cores covered here.</li>
+                <li><a href="../ip/bit-sync/">Bit Sync</a>, <a href="../ip/pulse-sync/">Pulse Sync</a> and <a href="../ip/toggle-sync/">Toggle Sync</a> &mdash; synchronizers for ordinary control signals.</li>
+                <li><a href="../ip/async-fifo/">Async FIFO</a> &mdash; for data, with per-domain resets (see the <a href="async-fifo-gray-code-cdc.html">design notes</a>).</li>
+            </ul>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>

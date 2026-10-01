@@ -13,12 +13,12 @@
     <meta property="og:title" content="Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing">
     <meta property="og:description" content="How a dual-clock async FIFO crosses clock domains in SystemVerilog: Gray-coded pointers, two-flop synchronizers, full/empty logic, FWFT output and CDC constraints.">
     <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html">
-    <meta property="og:image" content="https://pbarcelona-ai.github.io/og-image.png">
-    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-async-fifo-gray-code-cdc.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-async-fifo-gray-code-cdc.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing">
     <meta name="twitter:description" content="How a dual-clock async FIFO crosses clock domains in SystemVerilog: Gray-coded pointers, two-flop synchronizers, full/empty logic, FWFT output and CDC constraints.">
-    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing", "url": "https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html", "datePublished": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "about": "Dual-clock asynchronous FIFO design in SystemVerilog", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing", "url": "https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html", "datePublished": "2026-10-01", "dateModified": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-async-fifo-gray-code-cdc.png", "about": "Dual-clock asynchronous FIFO design in SystemVerilog", "proficiencyLevel": "Expert"}</script>
     <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: Async FIFO and Gray-Code CDC", "item": "https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html"}]}</script>
     <link rel="stylesheet" href="../site.css">
     <style>
@@ -30,15 +30,17 @@
         code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
         pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
         .back { display: inline-block; margin-top: 40px; }
     </style>
 </head>
 <body>
-    <main>
+    <main data-pagefind-body>
         <p class="eyebrow">Design notes</p>
         <h1>Async FIFO and Gray-code clock-domain crossing</h1>
+        <p class="updated">Published <time datetime="2026-10-01">2026-10-01</time></p>
         <article>
-            <p>These notes walk through the <a href="../digital_ip/ip/docs/async_fifo/index.html">async_fifo</a> core &mdash; a dual-clock FIFO in synthesizable SystemVerilog for passing a data stream between two unrelated clocks. It is parameterized by <code>DATA_W</code> and <code>DEPTH</code>, uses a valid/ready handshake on both sides, and is the building block under the <a href="../digital_ip/ip/docs/axis_async_bridge/index.html">AXI-Stream async bridge</a>.</p>
+            <p>These notes walk through the <a href="../ip/async-fifo/">async_fifo</a> core &mdash; a dual-clock FIFO in synthesizable SystemVerilog for passing a data stream between two unrelated clocks. It is parameterized by <code>DATA_W</code> and <code>DEPTH</code>, uses a valid/ready handshake on both sides, and is the building block under the <a href="../ip/axis-async-bridge/">AXI-Stream async bridge</a>.</p>
 
             <h2>Why the pointers are Gray-coded</h2>
             <p>The write side owns the write pointer, the read side owns the read pointer, and each side needs a copy of the other's pointer to compute full or empty. A binary counter can change several bits on one increment (<code>0111 &rarr; 1000</code>), and if a synchronizer samples during that transition it can capture any mix of old and new bits &mdash; a pointer value that never existed. Gray code changes exactly one bit per increment, so a sampled value is always either the old pointer or the new one. Either answer is safe; it only makes the flag a cycle or two late.</p>
@@ -66,7 +68,7 @@ assign wgray_n = (wbin_n &gt;&gt; 1) ^ wbin_n;</code></pre>
             <p><code>wlevel_o</code> gives the write side an estimate of occupancy, which helps with almost-full thresholds or flow control. It converts the synchronized read Gray pointer back to binary and subtracts it from the write pointer. Like the flags, it can over-report (the read pointer it sees is a little old) but never under-reports.</p>
 
             <h2>Reset</h2>
-            <p>Each domain has its own synchronous, active-low reset (<code>wrst_n</code>, <code>rrst_n</code>). They should be asserted together. Resetting only one side leaves the other holding a pointer that no longer matches, and the flags will be wrong until both are reset. If the resets come from an asynchronous source, generate each one with a <a href="../digital_ip/ip/docs/reset_sync/index.html">reset synchronizer</a> in its own domain.</p>
+            <p>Each domain has its own synchronous, active-low reset (<code>wrst_n</code>, <code>rrst_n</code>). They should be asserted together. Resetting only one side leaves the other holding a pointer that no longer matches, and the flags will be wrong until both are reset. If the resets come from an asynchronous source, generate each one with a <a href="../ip/reset-sync/">reset synchronizer</a> in its own domain.</p>
 
             <h2>Timing constraints</h2>
             <p>Static timing analysis can't reason about paths between unrelated clocks, so the pointer crossings need explicit constraints. The recommended form constrains only the Gray-pointer paths into the first synchronizer stage, with a datapath-only maximum delay of about one destination clock period:</p>
@@ -80,10 +82,10 @@ set_max_delay -datapath_only -from [get_cells -hier *rgray_reg*] -to [get_cells 
 
             <h2>Related cores</h2>
             <ul>
-                <li><a href="../digital_ip/ip/docs/async_fifo/index.html">async_fifo</a> &mdash; module page with the port list.</li>
-                <li><a href="../digital_ip/ip/docs/axis_async_bridge/index.html">AXI-Stream async bridge</a> &mdash; the same crossing wrapped as AXI4-Stream with tkeep, tlast and tuser.</li>
-                <li><a href="../digital_ip/ip/docs/sync_fifo/index.html">sync_fifo</a> and <a href="../digital_ip/ip/docs/fallthrough_fifo/index.html">fallthrough_fifo</a> &mdash; single-clock alternatives.</li>
-                <li><a href="../digital_ip/ip/docs/pulse_sync/index.html">pulse_sync</a>, <a href="../digital_ip/ip/docs/toggle_sync/index.html">toggle_sync</a> and <a href="../digital_ip/ip/docs/bit_sync/index.html">bit_sync</a> &mdash; for single control signals instead of data streams.</li>
+                <li><a href="../ip/async-fifo/">async_fifo</a> &mdash; module page with the port list.</li>
+                <li><a href="../ip/axis-async-bridge/">AXI-Stream async bridge</a> &mdash; the same crossing wrapped as AXI4-Stream with tkeep, tlast and tuser.</li>
+                <li><a href="../ip/sync-fifo/">sync_fifo</a> and <a href="../ip/fallthrough-fifo/">fallthrough_fifo</a> &mdash; single-clock alternatives.</li>
+                <li><a href="../ip/pulse-sync/">pulse_sync</a>, <a href="../ip/toggle-sync/">toggle_sync</a> and <a href="../ip/bit-sync/">bit_sync</a> &mdash; for single control signals instead of data streams.</li>
             </ul>
         </article>
         <a class="back" href="../index.html">&larr; Back to homepage</a>

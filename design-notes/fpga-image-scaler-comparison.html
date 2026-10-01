@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>FPGA Image Scalers Compared: Nearest, Bilinear, Bicubic, Lanczos | FPGA Cores 4U</title>
+    <meta name="description" content="How the nearest, bilinear, bicubic and Lanczos-3 video scalers work in SystemVerilog, what each costs in LUTs, DSPs and memory, and how to choose.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/fpga-image-scaler-comparison.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="FPGA Cores 4U">
+    <meta property="og:title" content="FPGA Image Scalers Compared: Nearest, Bilinear, Bicubic and Lanczos">
+    <meta property="og:description" content="How the nearest, bilinear, bicubic and Lanczos-3 video scalers work in SystemVerilog, what each costs in LUTs, DSPs and memory, and how to choose.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/fpga-image-scaler-comparison.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-fpga-image-scaler-comparison.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-fpga-image-scaler-comparison.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FPGA Image Scalers Compared: Nearest, Bilinear, Bicubic and Lanczos">
+    <meta name="twitter:description" content="How the nearest, bilinear, bicubic and Lanczos-3 video scalers work in SystemVerilog, what each costs in LUTs, DSPs and memory, and how to choose.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "FPGA Image Scalers Compared: Nearest, Bilinear, Bicubic and Lanczos", "url": "https://pbarcelona-ai.github.io/design-notes/fpga-image-scaler-comparison.html", "datePublished": "2026-10-01", "dateModified": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-fpga-image-scaler-comparison.png", "about": "Hardware image and video scaling algorithms on FPGA", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: FPGA image scalers compared: nearest, bilinear, bicubic and Lanczos", "item": "https://pbarcelona-ai.github.io/design-notes/fpga-image-scaler-comparison.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.92rem; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+        th { color: var(--heading); }
+        .table-wrap { overflow-x: auto; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main data-pagefind-body>
+        <p class="eyebrow">Design notes</p>
+        <h1>FPGA image scalers compared: nearest, bilinear, bicubic and Lanczos</h1>
+        <p class="updated">Published <time datetime="2026-10-01">2026-10-01</time></p>
+        <article>
+            <p>The library has a family of streaming image scalers that share one framework and differ only in the filter kernel. These notes explain what they share, how each kernel works, what each costs on a 7-series FPGA, and how to pick one. All of them take and produce AXI4-Stream video (<code>tuser</code> = start of frame, <code>tlast</code> = end of line), are controlled over AXI4-Lite, and produce one output pixel per clock.</p>
+
+            <h2>The shared framework</h2>
+            <ul>
+                <li><strong><a href="../ip/scaler-dda/">scaler_dda</a></strong> walks the output raster and produces, for every output pixel, the matching source coordinate in 16.16 fixed point: <code>src = OFFS + o &times; STEP</code>, accumulated exactly. The scale factor is just <code>STEP</code> (for example <code>0x0000_AAAB</code> &asymp; 2/3 for a 1.5&times; upscale), so any ratio works, up or down, independently in X and Y.</li>
+                <li><strong><a href="../ip/banked-framebuf/">banked_framebuf</a></strong> stores the input and returns a whole <code>TAPS &times; TAPS</code> window of neighbouring pixels every clock. It does this by splitting the image over <code>B &times; B</code> RAM banks (B = next power of 2 &ge; TAPS), so every pixel in any window lives in a different bank. Out-of-image taps are clamped to the edge.</li>
+                <li><strong><a href="../ip/scaler-ctrl/">scaler_ctrl</a></strong> owns the common register map (<code>0x000&ndash;0x02F</code>), captures input frames, detects start-of-frame/end-of-line errors and sequences frames. Kernel-specific registers start at <code>0x040</code>.</li>
+            </ul>
+            <p>Each scaler is therefore "DDA + window buffer + kernel", and swapping the kernel is how you trade quality for area.</p>
+
+            <h2>The kernels</h2>
+            <h3>Nearest neighbour</h3>
+            <p><code>out = in(round(src_x), round(src_y))</code>. One tap, no arithmetic on pixel data. It keeps hard edges perfectly sharp and adds no blur, but produces blocky, uneven pixels at non-integer ratios and aliases badly when downscaling. It's the right choice for integer upscales of pixel art, UI or text overlays, or when area matters most.</p>
+            <h3>Bilinear (2&times;2)</h3>
+            <p>A weighted average of the four surrounding pixels, with weights from the fractional part of the coordinate (8 phase bits by default). The weights are computed in hardware, so there are no tables to program. It's smooth and cheap, but softens edges, especially on upscales.</p>
+            <h3>Bicubic (4&times;4) and Lanczos-3 (6&times;6): polyphase FIR</h3>
+            <p>Both are thin wrappers around <a href="../ip/scaler-polyphase/">scaler_polyphase</a>, a separable polyphase FIR. The fractional coordinate is rounded to <code>PHASE_BITS</code> (default 6, so 64 phases), which selects one row of a programmable coefficient table. Filtering runs vertically first, then horizontally:</p>
+<pre><code>v_k = (&Sigma;_j CV[py][j] &middot; in[y0+j][x0+k] + 2^(F-1)) &gt;&gt;&gt; F
+out = clamp((&Sigma;_k CH[px][k] &middot; v_k + 2^(F-1)) &gt;&gt;&gt; F)        // F = COEF_FRAC = 14</code></pre>
+            <p>Coefficients are signed 16-bit (14 fraction bits) and live in AXI4-Lite-writable tables at <code>0x1000</code> (horizontal) and <code>0x2000</code> (vertical). That makes the kernel a run-time choice, not a synthesis choice. With 4 taps you can load any Mitchell&ndash;Netravali cubic: Catmull-Rom (B=0, C=0.5) for sharpness, Mitchell (1/3, 1/3) for the usual balance, or the B-spline (1, 0) for maximum smoothness. Lanczos-3 uses <code>sinc(x)&middot;sinc(x/3)</code> over 6 taps for the sharpest result. Its negative lobes can overshoot, so the output is clamped to the pixel range. The tables are generated by <code>tools/scaler_coefs.py</code>, normalized to unity DC gain, and should only be rewritten while the scaler is idle.</p>
+            <p>scaler_polyphase can also be used directly with up to 16 taps, for example 8&ndash;12-tap low-pass kernels for heavy downscaling without aliasing.</p>
+
+            <h2>What each costs</h2>
+            <p>Yosys (<code>synth_xilinx</code>, 7-series) estimates for a 640&times;480 RGB888 frame buffer:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Scaler</th><th>Taps</th><th>LUT</th><th>FF</th><th>BRAM36</th><th>DSP48E1</th></tr></thead>
+                <tbody>
+                    <tr><td><a href="../ip/scaler-nearest/">Nearest</a></td><td>1</td><td>1,364</td><td>827</td><td>225</td><td>2</td></tr>
+                    <tr><td><a href="../ip/scaler-bilinear/">Bilinear</a></td><td>2&times;2</td><td>2,080</td><td>1,528</td><td>228</td><td>21</td></tr>
+                    <tr><td><a href="../ip/scaler-bicubic/">Bicubic</a></td><td>4&times;4</td><td>7,966</td><td>8,754</td><td>240</td><td>65</td></tr>
+                    <tr><td><a href="../ip/scaler-lanczos/">Lanczos-3</a></td><td>6&times;6</td><td>28,235</td><td>15,830</td><td>256</td><td>135</td></tr>
+                </tbody>
+            </table></div>
+            <p>The DSP count is exactly the multiplier count: bicubic needs 3 colours &times; (16 vertical + 4 horizontal) = 60 multipliers plus 5 for address arithmetic, and Lanczos 3 &times; (36 + 6) = 126 plus 9. About half of Lanczos's LUTs are the 6&times;6 window multiplexer, since each of 36 taps selects from 64 banks. These are pre-place-and-route estimates with conservative DSP packing; Vivado typically absorbs many of the fabric pipeline registers into the DSP48s and lands noticeably lower.</p>
+
+            <h2>Frame buffer or line buffer</h2>
+            <p>Memory usually dominates. Each scaler has three buffering modes, chosen with parameters and sharing the same registers and output:</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>Mode</th><th>Stores</th><th>1920&times;1080 RGB888</th><th>Behaviour</th></tr></thead>
+                <tbody>
+                    <tr><td>Frame buffer (default)</td><td>1 frame</td><td>49.8 Mbit</td><td>Capture a frame, then output it; input stalls during output</td></tr>
+                    <tr><td><code>PINGPONG=1</code></td><td>2 frames</td><td>99.5 Mbit</td><td>Capture the next frame while outputting the current one</td></tr>
+                    <tr><td><code>LINE_BUF=1</code></td><td>4&ndash;8 lines</td><td>184&ndash;369 kbit</td><td>Output starts a few lines after input; needs <code>STEP_Y &ge; 0</code></td></tr>
+                </tbody>
+            </table></div>
+            <p>A 640&times;480 frame fits mid-range FPGA block RAM; a 1080p frame needs UltraRAM or external DDR. <strong>Line-buffer mode brings 1080p down to about 0.4 Mbit</strong>, which fits on essentially any FPGA, and has been simulated end to end on a real 1920&times;1080 frame with Lanczos-3.</p>
+
+            <h2>How to choose</h2>
+            <ul>
+                <li><strong>Integer upscales, pixel art, text overlays, smallest area:</strong> nearest.</li>
+                <li><strong>General video on a budget, mild ratio changes:</strong> bilinear.</li>
+                <li><strong>Best quality per LUT for video upscaling:</strong> bicubic with Catmull-Rom or Mitchell coefficients.</li>
+                <li><strong>Maximum sharpness, large upscales, plenty of DSPs:</strong> Lanczos-3, or the <a href="../ip/spatial-upscaler/">spatial upscaler</a> (Lanczos followed by <a href="../ip/sharpen-cas/">contrast-adaptive sharpening</a>).</li>
+                <li><strong>Large downscales (more than 2&times;):</strong> polyphase with 8&ndash;12 low-pass taps, or the mip-map based <a href="../ip/scaler-trilinear/">trilinear</a> and <a href="../ip/scaler-anisotropic/">anisotropic</a> scalers, which filter properly where few-tap kernels would alias.</li>
+                <li><strong>Edges that must stay crisp without ringing:</strong> the <a href="../ip/scaler-edge-directed/">edge-directed scaler</a>.</li>
+            </ul>
+            <p>In most designs, pick the buffering mode first (it sets memory), then the kernel (it sets DSPs and LUTs).</p>
+
+            <h2>Verification</h2>
+            <p>Each scaler has a self-checking testbench that compares every output pixel bit-exactly against an independent reference model, with AXI protocol checkers (procedural and SVA) on every interface. The suite covers identity, non-integer up and down ratios, random <code>tvalid</code>/<code>tready</code> stalls and maximum size, in all three buffering modes. The Lanczos-3 line-buffer build was also run on a real 1920&times;1080 image scaled to 1280&times;720, with all 921,600 output pixels matching. The testbenches can also scale a real image (<code>./run.sh +IMG=photo.ppm</code>) and write the result as a PPM for visual inspection. A gate-level flow re-runs the same testbench on the synthesized Xilinx netlist, block RAMs and DSP48s included.</p>
+
+            <h2>Related cores</h2>
+            <ul>
+                <li><a href="../ip/scaler-polyphase/">Polyphase Scaler</a>, <a href="../ip/scaler-bicubic/">Bicubic</a>, <a href="../ip/scaler-lanczos/">Lanczos</a>, <a href="../ip/scaler-bilinear/">Bilinear</a>, <a href="../ip/scaler-nearest/">Nearest</a>.</li>
+                <li><a href="../ip/scaler-dda/">DDA</a>, <a href="../ip/banked-framebuf/">Banked Frame Buffer</a> and <a href="../ip/scaler-ctrl/">Scaler Controller</a> &mdash; the shared framework.</li>
+                <li><a href="../lens-distortion-correction.html">Lens distortion correction</a> &mdash; the same window-buffer-plus-interpolation idea driven by a distortion model instead of a scale factor.</li>
+            </ul>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>

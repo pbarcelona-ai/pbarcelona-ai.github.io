@@ -13,12 +13,12 @@
     <meta property="og:title" content="AXI-Stream Width Converter in SystemVerilog: Design Notes">
     <meta property="og:description" content="Design of an AXI4-Stream data width converter in SystemVerilog: upsizing and downsizing, tkeep and tlast handling, tuser, byte order, throughput and verification.">
     <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html">
-    <meta property="og:image" content="https://pbarcelona-ai.github.io/og-image.png">
-    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-axi-stream-width-converter.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-axi-stream-width-converter.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="AXI-Stream Width Converter in SystemVerilog: Design Notes">
     <meta name="twitter:description" content="Design of an AXI4-Stream data width converter in SystemVerilog: upsizing and downsizing, tkeep and tlast handling, tuser, byte order, throughput and verification.">
-    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "AXI-Stream Width Converter in SystemVerilog: Design Notes", "url": "https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html", "datePublished": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "about": "AXI4-Stream data width conversion in SystemVerilog", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "AXI-Stream Width Converter in SystemVerilog: Design Notes", "url": "https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html", "datePublished": "2026-10-01", "dateModified": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-axi-stream-width-converter.png", "about": "AXI4-Stream data width conversion in SystemVerilog", "proficiencyLevel": "Expert"}</script>
     <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: AXI-Stream Width Converter", "item": "https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html"}]}</script>
     <link rel="stylesheet" href="../site.css">
     <style>
@@ -30,15 +30,17 @@
         code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
         pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
         pre code { background: none; padding: 0; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
         .back { display: inline-block; margin-top: 40px; }
     </style>
 </head>
 <body>
-    <main>
+    <main data-pagefind-body>
         <p class="eyebrow">Design notes</p>
         <h1>AXI-Stream width converter: upsizing, downsizing and tkeep</h1>
+        <p class="updated">Published <time datetime="2026-10-01">2026-10-01</time></p>
         <article>
-            <p>These notes cover the <a href="../digital_ip/ip/docs/axi_stream_width_converter/index.html">axi_stream_width_converter</a> core, which changes the data width of an AXI4-Stream between <code>IN_BYTES</code> and <code>OUT_BYTES</code>. A typical use is narrowing a 32-bit DMA stream into a byte-wide UART or SPI path, or packing an 8-bit sensor stream into 32-bit words before it is written to memory. One width must be an integer multiple of the other; if they are equal, the core reduces to a register slice.</p>
+            <p>These notes cover the <a href="../ip/axi-stream-width-converter/">axi_stream_width_converter</a> core, which changes the data width of an AXI4-Stream between <code>IN_BYTES</code> and <code>OUT_BYTES</code>. A typical use is narrowing a 32-bit DMA stream into a byte-wide UART or SPI path, or packing an 8-bit sensor stream into 32-bit words before it is written to memory. One width must be an integer multiple of the other; if they are equal, the core reduces to a register slice.</p>
 
             <h2>Interface and byte order</h2>
 <pre><code>axi_stream_width_converter #(
@@ -66,17 +68,17 @@
             </ul>
 
             <h2>Latency and throughput</h2>
-            <p>Latency is one clock for downsizing and equal widths. For upsizing it is the ratio in clocks, since the core has to collect a whole word before sending it. The control logic is deliberately minimal &mdash; one data register and a counter, with no skid buffer. The cost is a single idle cycle between words: the downsizer accepts a new input beat in the cycle after the last chunk leaves, and the upsizer accepts new input in the cycle after the full word is taken. With 4:1, that means 4 narrow beats every 5 clocks. If a link has to run at 100% on the narrow side, add an <a href="../digital_ip/ip/docs/axi_stream_fifo/index.html">AXI-Stream FIFO</a> or a register slice on the wide side.</p>
+            <p>Latency is one clock for downsizing and equal widths. For upsizing it is the ratio in clocks, since the core has to collect a whole word before sending it. The control logic is deliberately minimal &mdash; one data register and a counter, with no skid buffer. The cost is a single idle cycle between words: the downsizer accepts a new input beat in the cycle after the last chunk leaves, and the upsizer accepts new input in the cycle after the full word is taken. With 4:1, that means 4 narrow beats every 5 clocks. If a link has to run at 100% on the narrow side, add an <a href="../ip/axi-stream-fifo/">AXI-Stream FIFO</a> or a register slice on the wide side.</p>
 
             <h2>Verification</h2>
             <p>The self-checking testbench sends 200 random packets (random length, partial final <code>tkeep</code>) through 4&rarr;1, 4&rarr;2, 1&rarr;4, 2&rarr;4 and 4&rarr;4 instances with random stalls on both handshakes. A reference model compares the byte stream, packet boundaries and <code>tuser</code> at byte level. A downsize-then-upsize round trip must also reproduce the original beats exactly, which catches byte-order and <code>tkeep</code> mistakes that a single direction could miss.</p>
 
             <h2>Related cores</h2>
             <ul>
-                <li><a href="../digital_ip/ip/docs/axi_stream_width_converter/index.html">axi_stream_width_converter</a> &mdash; module page with the port list.</li>
-                <li><a href="../digital_ip/ip/docs/axi_stream_fifo/index.html">AXI-Stream FIFO</a> and <a href="../digital_ip/ip/docs/axi_stream_arbiter/index.html">AXI-Stream arbiter</a> &mdash; other parts of the streaming fabric.</li>
-                <li><a href="../digital_ip/ip/docs/axis_async_bridge/index.html">AXI-Stream async bridge</a> &mdash; for when the two widths also run on different clocks (see the <a href="async-fifo-gray-code-cdc.html">async FIFO design notes</a>).</li>
-                <li><a href="../digital_ip/ip/docs/packet_formatter/index.html">packet_formatter</a> and <a href="../digital_ip/ip/docs/packet_parser/index.html">packet_parser</a> &mdash; framing on top of AXI-Stream.</li>
+                <li><a href="../ip/axi-stream-width-converter/">axi_stream_width_converter</a> &mdash; module page with the port list.</li>
+                <li><a href="../ip/axi-stream-fifo/">AXI-Stream FIFO</a> and <a href="../ip/axi-stream-arbiter/">AXI-Stream arbiter</a> &mdash; other parts of the streaming fabric.</li>
+                <li><a href="../ip/axis-async-bridge/">AXI-Stream async bridge</a> &mdash; for when the two widths also run on different clocks (see the <a href="async-fifo-gray-code-cdc.html">async FIFO design notes</a>).</li>
+                <li><a href="../ip/packet-formatter/">packet_formatter</a> and <a href="../ip/packet-parser/">packet_parser</a> &mdash; framing on top of AXI-Stream.</li>
             </ul>
         </article>
         <a class="back" href="../index.html">&larr; Back to homepage</a>
