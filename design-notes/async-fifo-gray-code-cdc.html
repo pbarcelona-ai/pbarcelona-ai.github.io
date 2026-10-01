@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing | FPGA Cores 4U</title>
+    <meta name="description" content="How a dual-clock async FIFO crosses clock domains in SystemVerilog: Gray-coded pointers, two-flop synchronizers, full/empty logic, FWFT output and CDC constraints.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="FPGA Cores 4U">
+    <meta property="og:title" content="Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing">
+    <meta property="og:description" content="How a dual-clock async FIFO crosses clock domains in SystemVerilog: Gray-coded pointers, two-flop synchronizers, full/empty logic, FWFT output and CDC constraints.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing">
+    <meta name="twitter:description" content="How a dual-clock async FIFO crosses clock domains in SystemVerilog: Gray-coded pointers, two-flop synchronizers, full/empty logic, FWFT output and CDC constraints.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Async FIFO in SystemVerilog: Gray-Code Clock-Domain Crossing", "url": "https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html", "datePublished": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "about": "Dual-clock asynchronous FIFO design in SystemVerilog", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: Async FIFO and Gray-Code CDC", "item": "https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main>
+        <p class="eyebrow">Design notes</p>
+        <h1>Async FIFO and Gray-code clock-domain crossing</h1>
+        <article>
+            <p>These notes walk through the <a href="../digital_ip/ip/docs/async_fifo/index.html">async_fifo</a> core &mdash; a dual-clock FIFO in synthesizable SystemVerilog for passing a data stream between two unrelated clocks. It is parameterized by <code>DATA_W</code> and <code>DEPTH</code>, uses a valid/ready handshake on both sides, and is the building block under the <a href="../digital_ip/ip/docs/axis_async_bridge/index.html">AXI-Stream async bridge</a>.</p>
+
+            <h2>Why the pointers are Gray-coded</h2>
+            <p>The write side owns the write pointer, the read side owns the read pointer, and each side needs a copy of the other's pointer to compute full or empty. A binary counter can change several bits on one increment (<code>0111 &rarr; 1000</code>), and if a synchronizer samples during that transition it can capture any mix of old and new bits &mdash; a pointer value that never existed. Gray code changes exactly one bit per increment, so a sampled value is always either the old pointer or the new one. Either answer is safe; it only makes the flag a cycle or two late.</p>
+            <p>Each side keeps a binary pointer for addressing RAM and derives the Gray value from the <em>next</em> binary value, so the Gray register is updated in the same clock as the address:</p>
+<pre><code>assign wbin_n  = wbin + wen;
+assign wgray_n = (wbin_n &gt;&gt; 1) ^ wbin_n;</code></pre>
+            <p>This is also why <code>DEPTH</code> must be a power of two: the Gray sequence only wraps with a single-bit change when the counter wraps at a power of two. The core rejects other depths at elaboration.</p>
+
+            <h2>Two-flop synchronizers</h2>
+            <p>The read pointer is brought into the write clock (<code>rgray_s1 &rarr; rgray_s2</code>) and the write pointer into the read clock (<code>wgray_s1 &rarr; wgray_s2</code>) through two flops each. Both stages are marked <code>(* async_reg = "true" *)</code> so FPGA tools place them close together and treat them as synchronizers in reliability and CDC reports.</p>
+
+            <h2>Full and empty with one extra pointer bit</h2>
+            <p>Pointers are <code>AW+1</code> bits wide, where <code>AW = $clog2(DEPTH)</code>. The extra MSB counts wraps, so "same address, same wrap" is empty and "same address, one wrap apart" is full:</p>
+            <ul>
+                <li><strong>Empty</strong> (read domain): the next read Gray pointer equals the synchronized write Gray pointer.</li>
+                <li><strong>Full</strong> (write domain): the next write Gray pointer equals the synchronized read Gray pointer with its <em>two</em> MSBs inverted. In Gray code, a half-cycle offset flips the top two bits rather than just the top one.</li>
+            </ul>
+            <p>Both flags are registered but computed from the <em>next</em> pointer value, so a write or read is reflected on the very next clock with no extra cycle of lag. Because each side only sees a delayed copy of the other pointer, the flags are pessimistic: full may stay asserted a few cycles after space frees up, and empty may stay asserted a few cycles after data arrives. They are never optimistic, so the FIFO can't overflow or underflow.</p>
+
+            <h2>First-word-fall-through output</h2>
+            <p>The storage array has a registered read so it maps onto FPGA block RAM. A second output register (<code>o_q</code>) presents data with <code>rvalid</code>, giving first-word-fall-through behaviour: the consumer sees valid data without asking for it, and takes it with <code>rready</code>. The two-stage pipeline (<code>mem_q</code>, then <code>o_q</code>) prefetches on its own, so the consumer can take one word per clock.</p>
+            <p>End-to-end, a written word reaches <code>rvalid</code> 3 to 5 read clocks later: two for the pointer synchronizer, plus the RAM read and output stages, with the exact number depending on clock phase.</p>
+
+            <h2>Fill level on the write side</h2>
+            <p><code>wlevel_o</code> gives the write side an estimate of occupancy, which helps with almost-full thresholds or flow control. It converts the synchronized read Gray pointer back to binary and subtracts it from the write pointer. Like the flags, it can over-report (the read pointer it sees is a little old) but never under-reports.</p>
+
+            <h2>Reset</h2>
+            <p>Each domain has its own synchronous, active-low reset (<code>wrst_n</code>, <code>rrst_n</code>). They should be asserted together. Resetting only one side leaves the other holding a pointer that no longer matches, and the flags will be wrong until both are reset. If the resets come from an asynchronous source, generate each one with a <a href="../digital_ip/ip/docs/reset_sync/index.html">reset synchronizer</a> in its own domain.</p>
+
+            <h2>Timing constraints</h2>
+            <p>Static timing analysis can't reason about paths between unrelated clocks, so the pointer crossings need explicit constraints. The recommended form constrains only the Gray-pointer paths into the first synchronizer stage, with a datapath-only maximum delay of about one destination clock period:</p>
+<pre><code># AMD Vivado (XDC) &mdash; adjust instance paths to your hierarchy
+set_max_delay -datapath_only -from [get_cells -hier *wgray_reg*] -to [get_cells -hier *wgray_s1_reg*] &lt;rclk_period&gt;
+set_max_delay -datapath_only -from [get_cells -hier *rgray_reg*] -to [get_cells -hier *rgray_s1_reg*] &lt;wclk_period&gt;</code></pre>
+            <p>A blanket <code>set_false_path</code> between the clocks also closes timing, but it lets the tool route the pointer bits with arbitrary skew. That can break the one-bit-at-a-time guarantee Gray coding depends on, so prefer <code>set_max_delay</code>. The RAM read path is registered in the read clock and needs no special constraint.</p>
+
+            <h2>Verification</h2>
+            <p>The self-checking testbench runs two instances at unrelated clock ratios: fast write into slow read (10 ns / 27 ns) and the reverse. Writes and reads use random valid and ready patterns. A scoreboard checks every word for order and integrity, and the test also confirms that full is actually reached and that no word is lost or duplicated. Writing while full or reading while empty is simply ignored by the RTL, so a misbehaving producer or consumer can&rsquo;t corrupt the pointers.</p>
+
+            <h2>Related cores</h2>
+            <ul>
+                <li><a href="../digital_ip/ip/docs/async_fifo/index.html">async_fifo</a> &mdash; module page with the port list.</li>
+                <li><a href="../digital_ip/ip/docs/axis_async_bridge/index.html">AXI-Stream async bridge</a> &mdash; the same crossing wrapped as AXI4-Stream with tkeep, tlast and tuser.</li>
+                <li><a href="../digital_ip/ip/docs/sync_fifo/index.html">sync_fifo</a> and <a href="../digital_ip/ip/docs/fallthrough_fifo/index.html">fallthrough_fifo</a> &mdash; single-clock alternatives.</li>
+                <li><a href="../digital_ip/ip/docs/pulse_sync/index.html">pulse_sync</a>, <a href="../digital_ip/ip/docs/toggle_sync/index.html">toggle_sync</a> and <a href="../digital_ip/ip/docs/bit_sync/index.html">bit_sync</a> &mdash; for single control signals instead of data streams.</li>
+            </ul>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>

@@ -5,9 +5,12 @@ Regenerates the catalog with the submodule's own generators (writing into
 digital_ip/ip/docs/ and digital_ip/ip/tools/docs/, as that project already
 does), strips links to full RTL source (replacing them with header+port-list
 snippets and shared-module snippets extracted from the submodule), and
-layers on this site's SEO/navigation conventions (canonical/OG/Twitter tags,
+layers on this site's SEO/navigation conventions (search-friendly titles and
+short descriptions, canonical/OG/Twitter tags, SoftwareSourceCode JSON-LD,
 favicon, breadcrumbs, per-category "typical applications" + related-module
-links).
+links). The per-module copies under ip/<category>/<module>/docs/ get a
+canonical link to the catalog page, and the site's index.html IP index
+(between the IP-INDEX markers) is regenerated from the catalog.
 
 digital_ip/ is a git submodule (see .gitmodules); this script never commits
 to it, it only rewrites the working tree so the GitHub Pages build can
@@ -41,6 +44,39 @@ CATEGORY_BLURBS = {
     "Peripherals": "Peripheral IP like this implements standard off-chip interfaces &mdash; typical uses include sensor and storage buses (I2C, SPI, SDIO), communication links (UART, USB, Ethernet, PCIe), and general-purpose I/O and interrupt control.",
     "Scalers": "Scaler and video-pipeline IP like this is used in image and video processing datapaths &mdash; typical uses include resolution conversion, sharpening, frame buffering, and control-plane register access in camera or display pipelines.",
     "Timing": "Timing IP like this generates or measures time-based signals &mdash; typical uses include baud-rate and PWM generation, frequency/interval measurement, watchdogs, and numerically controlled oscillators for communication and control systems.",
+}
+
+# Home-page section headings and intros, one per catalog category.
+HOME_CATEGORIES = {
+    "Bus": ("AXI &amp; bus interconnect IP", "AXI4-Lite decoders, muxes and register blocks, AXI4-Stream FIFOs, arbiters and width converters, DMA engines, and packet formatters/parsers for building SoC and FPGA shell fabrics."),
+    "CDC": ("Clock-domain crossing (CDC) IP", "Bit, pulse and toggle synchronizers, reset synchronizers, and AXI4-Lite / AXI4-Stream bridges for moving control and data safely between unrelated clocks."),
+    "Common": ("DSP building blocks", "FIR and CIC filters, CORDIC, DDS, edge detection, and encoders for signal-conditioning, sample-rate conversion and control-loop datapaths."),
+    "FIFO": ("FIFOs", "Synchronous, asynchronous (dual-clock), first-word-fall-through and packet FIFOs for buffering bursty or rate-mismatched traffic."),
+    "Integrity": ("CRC, ECC &amp; data integrity IP", "CRC-8/16/32, checksums, parity, LFSRs and an ECC memory controller for protecting storage and communication links."),
+    "Math": ("Arithmetic IP", "Pipelined multiply-accumulate for filters, correlators and neural-network style accumulation."),
+    "Memory": ("Memory IP", "Single-port, simple dual-port and true dual-port RAMs, ROMs, register files and a memory arbiter, written to infer FPGA block RAM."),
+    "Peripherals": ("Peripheral interface IP", "UART, I2C, SPI, I2S, SDIO, SPI flash, GPIO, interrupt controller, Ethernet MAC interface, USB full-speed SIE and a PCIe transaction-layer endpoint."),
+    "Scalers": ("Video scaler &amp; image pipeline IP", "Nearest, bilinear, bicubic, Lanczos, polyphase, edge-directed and anisotropic scalers, sharpening, frame buffers and the AXI control plane around them."),
+    "Timing": ("Timers, counters &amp; clock generation", "Baud generators, NCOs, PWM, pulse generators, frequency counters, interval/timeout timers, timestamps and a watchdog."),
+}
+
+# Long-form design notes, linked from the matching module pages.
+DESIGN_NOTES = {
+    "async_fifo": ("/design-notes/async-fifo-gray-code-cdc.html", "Design notes: async FIFO and Gray-code CDC"),
+    "axi_stream_width_converter": ("/design-notes/axi-stream-width-converter.html", "Design notes: AXI-Stream width converter"),
+}
+
+# Tokens in module directory names that need special casing in titles.
+NAME_TOKENS = {
+    "axi": "AXI", "axi4": "AXI4", "axis": "AXI-Stream", "axil": "AXI4-Lite", "cdc": "CDC",
+    "fifo": "FIFO", "crc8": "CRC-8", "crc16": "CRC-16", "crc32": "CRC-32", "ecc": "ECC",
+    "lfsr": "LFSR", "mac": "MAC", "rom": "ROM", "ram": "RAM", "dma": "DMA", "i2c": "I2C",
+    "i2s": "I2S", "spi": "SPI", "uart": "UART", "rx": "RX", "tx": "TX", "usb": "USB",
+    "fs": "Full-Speed", "sie": "SIE", "eth": "Ethernet", "pcie": "PCIe", "tl": "Transaction-Layer",
+    "ep": "Endpoint", "sdio": "SDIO", "gpio": "GPIO", "intc": "Interrupt Controller",
+    "pwm": "PWM", "nco": "NCO", "dds": "DDS", "fir": "FIR", "cic": "CIC", "cordic": "CORDIC",
+    "mip": "MIP", "dda": "DDA", "cas": "CAS", "if": "Interface", "ctrl": "Controller",
+    "regs": "Registers", "regbus": "Register Bus", "framebuf": "Frame Buffer", "onehot": "One-Hot",
 }
 
 SHARED_REF_RE = re.compile(r'shared/(?:src|tb)/[A-Za-z0-9_/]*?([A-Za-z0-9_]+\.sv)')
@@ -227,6 +263,126 @@ def add_seo_tags(content: str, canonical_url: str) -> str:
     return content.replace("</title>", "</title>" + snippet, 1)
 
 
+def pretty_name(module: str) -> str:
+    """axi4_lite_mux -> AXI4-Lite Mux, axi_stream_fifo -> AXI-Stream FIFO."""
+    name = re.sub(r"(^|_)axi4_lite(?=_|$)", r"\1AXI4-Lite", module)
+    name = re.sub(r"(^|_)axi_stream(?=_|$)", r"\1AXI-Stream", name)
+    name = name.replace("dual_port", "Dual-Port").replace("single_port", "Single-Port")
+    name = name.replace("edge_directed", "Edge-Directed")
+    words = " ".join(NAME_TOKENS.get(t, t if not t.islower() else t.capitalize()) for t in name.split("_"))
+    # scaler_bicubic -> Bicubic Scaler
+    if words.startswith("Scaler ") and words != "Scaler Controller":
+        return words[len("Scaler "):] + " Scaler"
+    return words
+
+
+def top_level_clauses(sentence: str) -> list[str]:
+    """Splits after commas/semicolons that are not inside parentheses."""
+    clauses, depth, start = [], 0, 0
+    for i, ch in enumerate(sentence):
+        depth += (ch == "(") - (ch == ")")
+        if ch in ",;" and depth == 0:
+            clauses.append(sentence[start:i + 1].strip())
+            start = i + 1
+    clauses.append(sentence[start:].strip())
+    return [c for c in clauses if c]
+
+
+def short_description(desc: str, limit: int = 160) -> str:
+    """First sentence(s) of a long generator description, sized for search snippets."""
+    text = re.sub(r"([a-z])- ([a-z])", r"\1-\2", " ".join(desc.split()))   # undo comment line-wrap hyphens
+    sentences = [s for s in re.split(r"(?<=\.)\s+", text) if s and not re.match(r"Version \d|\w+ - ", s)]   # drop "Version x", "Clocks - ..." boilerplate
+    out = sentences[0] if sentences else text
+    for s in sentences[1:]:
+        if len(out) >= 90:
+            break
+        if len(out) + 1 + len(s) > limit:
+            # take the longest leading clause of the next sentence that still fits
+            clauses = top_level_clauses(s)
+            part = ""
+            for c in clauses:
+                if len(out) + 1 + len(part) + len(c) + 1 > limit:
+                    break
+                part = f"{part} {c}".strip()
+            if part:
+                out += " " + part.rstrip(",;") + "."
+            break
+        out += " " + s
+    if len(out) > limit:
+        out = out[:limit - 1].rsplit(" ", 1)[0].rstrip(",;:-") + "…"
+    tail = " Synthesizable SystemVerilog for FPGA and ASIC."
+    if "SystemVerilog" not in out and len(out) + len(tail) <= limit:
+        out += tail
+    return out
+
+
+def apply_module_title(content: str, pretty: str, desc: str) -> str:
+    title = f"{pretty} – SystemVerilog IP Core | FPGA Cores 4U"
+    content = re.sub(r"<title>.*?</title>", lambda _: f"<title>{html.escape(title, quote=False)}</title>", content, count=1, flags=re.S)
+    content = re.sub(r'<meta name="description" content="[^"]*">',
+                     lambda _: f'<meta name="description" content="{html.escape(desc, quote=True)}">', content, count=1)
+    return re.sub(r"<h1>.*?</h1>", lambda _: f"<h1>{html.escape(pretty, quote=False)}</h1>", content, count=1, flags=re.S)
+
+
+def add_software_jsonld(content: str, pretty: str, desc: str, canonical_url: str, category: str) -> str:
+    if "SoftwareSourceCode" in content or "</head>" not in content:
+        return content
+    data = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": f"{pretty} SystemVerilog IP core",
+        "description": desc,
+        "url": canonical_url,
+        "programmingLanguage": "SystemVerilog",
+        "codeRepository": "https://github.com/pbarcelona-ai/digital_ip",
+        "keywords": f"{category}, SystemVerilog, Verilog, FPGA, ASIC, RTL, IP core",
+        "author": {"@type": "Organization", "name": "FPGA Cores 4U", "url": f"{BASE_URL}/"},
+    }
+    snippet = f'<script type="application/ld+json">{json.dumps(data)}</script>'
+    return content.replace("</head>", snippet + "</head>", 1)
+
+
+def add_canonical_only(content: str, canonical_url: str) -> str:
+    if 'rel="canonical"' in content or "</title>" not in content:
+        return content
+    return content.replace("</title>", f'</title><link rel="canonical" href="{canonical_url}">', 1)
+
+
+def canonicalize_per_module_copies() -> int:
+    """ip/<category>/<module>/docs/index.html duplicates ip/docs/<module>/index.html; point it there."""
+    count = 0
+    for page in SUBMODULE_IP.glob("*/*/docs/index.html"):
+        module = page.parent.parent.name
+        if not (OUT_ROOT / "docs" / module / "index.html").is_file():
+            continue
+        content = page.read_text(encoding="utf-8")
+        new = add_canonical_only(content, f"{BASE_URL}/digital_ip/ip/docs/{module}/index.html")
+        if new != content:
+            page.write_text(new, encoding="utf-8")
+            count += 1
+    return count
+
+
+def update_home_page(categories: dict[str, list[str]], titles: dict[str, str]) -> None:
+    """Fills the IP index between the markers in the site's index.html."""
+    start, end = "<!-- IP-INDEX:START -->", "<!-- IP-INDEX:END -->"
+    page = REPO_ROOT / "index.html"
+    content = page.read_text(encoding="utf-8")
+    if start not in content or end not in content:
+        return
+    parts = []
+    for category, modules in categories.items():
+        mods = [m for m in modules if (OUT_ROOT / "docs" / m / "index.html").is_file()]
+        if not mods:
+            continue
+        heading, intro = HOME_CATEGORIES.get(category, (category, ""))
+        links = "".join(f'<li><a href="digital_ip/ip/docs/{m}/index.html">{titles.get(m, m)}</a></li>' for m in mods)
+        parts.append(f'<section class="ip-category"><h3>{heading}</h3><p>{intro}</p><ul class="ip-list">{links}</ul></section>')
+    block = start + "\n" + "\n".join(parts) + "\n" + end
+    content = re.sub(re.escape(start) + r".*?" + re.escape(end), lambda _: block, content, count=1, flags=re.S)
+    page.write_text(content, encoding="utf-8")
+
+
 def add_favicon_and_theme(content: str) -> str:
     if 'rel="icon"' in content:
         return content
@@ -257,12 +413,15 @@ def add_typical_applications(content: str, category: str, module: str, siblings:
     if "Typical applications" in content or not siblings:
         return content
     links = "".join(f'<li><a href="../{s}/index.html">{titles.get(s, s)}</a></li>' for s in siblings[:5])
+    note = DESIGN_NOTES.get(module)
+    notes = f'<h2>Design notes</h2><p><a href="{note[0]}">{note[1]}</a></p>' if note else ""
     section = (
         '<section class="content"><article>'
         f'<p class="eyebrow">{category}</p><h2>Typical applications</h2>'
         f'<p>{CATEGORY_BLURBS.get(category, "")}</p>'
         '<h2>Related modules</h2>'
         f'<ul class="file-list">{links}</ul>'
+        f'{notes}'
         '</article></section>'
     )
     if "<footer" not in content:
@@ -282,13 +441,7 @@ def main() -> None:
     shared_names = find_shared_refs()
     shared_written = generate_shared_snippets(shared_names)
 
-    titles: dict[str, str] = {}
-    for module in module_to_category:
-        page = OUT_ROOT / "docs" / module / "index.html"
-        if not page.is_file():
-            continue
-        tm = re.search(r"<title>(.*?)</title>", page.read_text(encoding="utf-8"), re.S)
-        titles[module] = html.unescape(tm.group(1)).split("|")[0].strip() if tm else module
+    titles = {module: pretty_name(module) for module in module_to_category}
 
     for module, category in module_to_category.items():
         page = OUT_ROOT / "docs" / module / "index.html"
@@ -301,7 +454,11 @@ def main() -> None:
         if own_basename:
             content = add_module_decl_link(content, module)
         canonical = f"{BASE_URL}/digital_ip/ip/docs/{module}/index.html"
+        dm = re.search(r'<meta name="description" content="([^"]*)"', content)
+        desc = short_description(html.unescape(dm.group(1)) if dm else f"{titles[module]} IP core.")
+        content = apply_module_title(content, titles[module], desc)
         content = add_seo_tags(content, canonical)
+        content = add_software_jsonld(content, titles[module], desc, canonical, category)
         content = add_favicon_and_theme(content)
         content = add_breadcrumbs(content, titles.get(module, module), canonical)
         siblings = [m for m in categories.get(category, []) if m != module]
@@ -321,8 +478,19 @@ def main() -> None:
         content = add_breadcrumbs(content, None, canonical)
         page.write_text(content, encoding="utf-8")
 
+    # Vision-system microsite: self-canonical + OG tags.
+    for page in sorted((SUBMODULE_ROOT / "image_processing" / "vision_system" / "docs" / "site").glob("*.html")):
+        rel = page.relative_to(REPO_ROOT).as_posix()
+        content = page.read_text(encoding="utf-8")
+        content = add_seo_tags(content, f"{BASE_URL}/{rel}")
+        page.write_text(content, encoding="utf-8")
+
+    copies = canonicalize_per_module_copies()
+    update_home_page(categories, titles)
+
     print(f"[build] done: {len(module_to_category)} module pages, "
-          f"{len(resolved)} module snippets, {len(shared_written)} shared snippets")
+          f"{len(resolved)} module snippets, {len(shared_written)} shared snippets, "
+          f"{copies} per-module copies canonicalized")
 
 
 if __name__ == "__main__":

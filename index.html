@@ -13,7 +13,20 @@
         "@type": "Organization",
         "name": "FPGA Cores 4U",
         "url": "https://pbarcelona-ai.github.io/",
+        "logo": "https://pbarcelona-ai.github.io/favicon.svg",
+        "email": "fpga.cores4u@gmail.com",
+        "sameAs": ["https://github.com/pbarcelona-ai"],
         "description": "AI-accelerated SystemVerilog & Verilog IP cores for FPGA and ASIC."
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "FPGA Cores 4U",
+        "url": "https://pbarcelona-ai.github.io/",
+        "description": "Catalog of synthesizable SystemVerilog IP cores for FPGA and ASIC: AXI interconnect, CDC, FIFOs, DSP, video scalers, peripherals and timers.",
+        "publisher": {"@type": "Organization", "name": "FPGA Cores 4U"}
     }
     </script>
     <style>
@@ -77,6 +90,14 @@
             font-size: 0.85rem;
             font-family: monospace;
         }
+        .ip-category { margin-top: 32px; }
+        .ip-category h3 { color: var(--heading); margin-bottom: 4px; }
+        .ip-category p { margin-top: 0; }
+        .ip-list { columns: 3 220px; column-gap: 24px; padding-left: 18px; margin: 8px 0 0; }
+        .ip-list li { break-inside: avoid; margin-bottom: 4px; }
+        .ip-list a, .notes-list a { color: var(--accent); text-decoration: none; }
+        .ip-list a:hover, .notes-list a:hover { text-decoration: underline; }
+        .notes-list li { margin-bottom: 10px; }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -122,7 +143,7 @@
 
     <header>
         <span class="badge">SYSTEMVERILOG / VERILOG IP CORES</span>
-        <h1> FPGA/ASIC IP Cores</h1>
+        <h1>SystemVerilog IP Cores for FPGA and ASIC</h1>
         <h2>Developed by FPGA Cores 4U</h2>
         <p class="tagline">AI-Accelerated Custom RTL & Hardware IP Cores for FPGA and ASIC</p>
         <p>Shrink hardware engineering turnaround from months to days. Optimized for AMD/Xilinx, Intel/Altera, Microchip, and custom ASIC target architectures.</p>
@@ -143,6 +164,28 @@
             <a href="design-notes/lens-distortion-correction.html" class="cta-btn">Read the design notes</a>
             <a href="https://github.com/pbarcelona-ai/pbarcelona-ai.github.io" class="cta-btn">View on GitHub</a>
         </div>
+
+        <h2 style="margin-top: 60px;">SystemVerilog IP cores by category</h2>
+        <p>Every core below is synthesizable SystemVerilog with a self-checking testbench, a port-list snippet, and its own documentation page. Browse by category or open the <a href="digital_ip/ip/docs/index.html">full Digital IP catalog</a>.</p>
+        <!-- IP-INDEX:START -->
+<section class="ip-category"><h3>AXI &amp; bus interconnect IP</h3><p>AXI4-Lite decoders, muxes and register blocks, AXI4-Stream FIFOs, arbiters and width converters, DMA engines, and packet formatters/parsers for building SoC and FPGA shell fabrics.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/axi4_lite_decoder/index.html">AXI4-Lite Decoder</a></li><li><a href="digital_ip/ip/docs/axi4_lite_mux/index.html">AXI4-Lite Mux</a></li><li><a href="digital_ip/ip/docs/axi4_lite_regs/index.html">AXI4-Lite Registers</a></li><li><a href="digital_ip/ip/docs/axi4_lite_slave/index.html">AXI4-Lite Slave</a></li><li><a href="digital_ip/ip/docs/axi_stream_arbiter/index.html">AXI-Stream Arbiter</a></li><li><a href="digital_ip/ip/docs/axi_stream_fifo/index.html">AXI-Stream FIFO</a></li><li><a href="digital_ip/ip/docs/axi_stream_width_converter/index.html">AXI-Stream Width Converter</a></li><li><a href="digital_ip/ip/docs/axis_dma/index.html">AXI-Stream DMA</a></li><li><a href="digital_ip/ip/docs/demo_regs/index.html">Demo Registers</a></li><li><a href="digital_ip/ip/docs/dma_engine/index.html">DMA Engine</a></li><li><a href="digital_ip/ip/docs/packet_formatter/index.html">Packet Formatter</a></li><li><a href="digital_ip/ip/docs/packet_parser/index.html">Packet Parser</a></li></ul></section>
+<section class="ip-category"><h3>Clock-domain crossing (CDC) IP</h3><p>Bit, pulse and toggle synchronizers, reset synchronizers, and AXI4-Lite / AXI4-Stream bridges for moving control and data safely between unrelated clocks.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/axi4_lite_cdc/index.html">AXI4-Lite CDC</a></li><li><a href="digital_ip/ip/docs/axis_async_bridge/index.html">AXI-Stream Async Bridge</a></li><li><a href="digital_ip/ip/docs/bit_sync/index.html">Bit Sync</a></li><li><a href="digital_ip/ip/docs/clock_domain_bridge/index.html">Clock Domain Bridge</a></li><li><a href="digital_ip/ip/docs/pulse_sync/index.html">Pulse Sync</a></li><li><a href="digital_ip/ip/docs/reset_ctrl/index.html">Reset Controller</a></li><li><a href="digital_ip/ip/docs/reset_sync/index.html">Reset Sync</a></li><li><a href="digital_ip/ip/docs/toggle_sync/index.html">Toggle Sync</a></li></ul></section>
+<section class="ip-category"><h3>DSP building blocks</h3><p>FIR and CIC filters, CORDIC, DDS, edge detection, and encoders for signal-conditioning, sample-rate conversion and control-loop datapaths.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/cic/index.html">CIC</a></li><li><a href="digital_ip/ip/docs/cordic/index.html">CORDIC</a></li><li><a href="digital_ip/ip/docs/dds/index.html">DDS</a></li><li><a href="digital_ip/ip/docs/edge_detect/index.html">Edge Detect</a></li><li><a href="digital_ip/ip/docs/fir/index.html">FIR</a></li><li><a href="digital_ip/ip/docs/onehot_decoder/index.html">One-Hot Decoder</a></li><li><a href="digital_ip/ip/docs/priority_encoder/index.html">Priority Encoder</a></li></ul></section>
+<section class="ip-category"><h3>FIFOs</h3><p>Synchronous, asynchronous (dual-clock), first-word-fall-through and packet FIFOs for buffering bursty or rate-mismatched traffic.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/async_fifo/index.html">Async FIFO</a></li><li><a href="digital_ip/ip/docs/fallthrough_fifo/index.html">Fallthrough FIFO</a></li><li><a href="digital_ip/ip/docs/packet_fifo/index.html">Packet FIFO</a></li><li><a href="digital_ip/ip/docs/sync_fifo/index.html">Sync FIFO</a></li></ul></section>
+<section class="ip-category"><h3>CRC, ECC &amp; data integrity IP</h3><p>CRC-8/16/32, checksums, parity, LFSRs and an ECC memory controller for protecting storage and communication links.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/checksum/index.html">Checksum</a></li><li><a href="digital_ip/ip/docs/crc16/index.html">CRC-16</a></li><li><a href="digital_ip/ip/docs/crc32/index.html">CRC-32</a></li><li><a href="digital_ip/ip/docs/crc8/index.html">CRC-8</a></li><li><a href="digital_ip/ip/docs/ecc_memory_ctrl/index.html">ECC Memory Controller</a></li><li><a href="digital_ip/ip/docs/error_status/index.html">Error Status</a></li><li><a href="digital_ip/ip/docs/lfsr/index.html">LFSR</a></li><li><a href="digital_ip/ip/docs/parity_check/index.html">Parity Check</a></li><li><a href="digital_ip/ip/docs/parity_gen/index.html">Parity Gen</a></li></ul></section>
+<section class="ip-category"><h3>Arithmetic IP</h3><p>Pipelined multiply-accumulate for filters, correlators and neural-network style accumulation.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/mac/index.html">MAC</a></li></ul></section>
+<section class="ip-category"><h3>Memory IP</h3><p>Single-port, simple dual-port and true dual-port RAMs, ROMs, register files and a memory arbiter, written to infer FPGA block RAM.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/memory_arbiter/index.html">Memory Arbiter</a></li><li><a href="digital_ip/ip/docs/register_file/index.html">Register File</a></li><li><a href="digital_ip/ip/docs/rom/index.html">ROM</a></li><li><a href="digital_ip/ip/docs/simple_dual_port_ram/index.html">Simple Dual-Port RAM</a></li><li><a href="digital_ip/ip/docs/single_port_ram/index.html">Single-Port RAM</a></li><li><a href="digital_ip/ip/docs/true_dual_port_ram/index.html">True Dual-Port RAM</a></li></ul></section>
+<section class="ip-category"><h3>Peripheral interface IP</h3><p>UART, I2C, SPI, I2S, SDIO, SPI flash, GPIO, interrupt controller, Ethernet MAC interface, USB full-speed SIE and a PCIe transaction-layer endpoint.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/edge_event_capture/index.html">Edge Event Capture</a></li><li><a href="digital_ip/ip/docs/eth_mac_if/index.html">Ethernet MAC Interface</a></li><li><a href="digital_ip/ip/docs/gpio/index.html">GPIO</a></li><li><a href="digital_ip/ip/docs/i2c_master/index.html">I2C Master</a></li><li><a href="digital_ip/ip/docs/i2s/index.html">I2S</a></li><li><a href="digital_ip/ip/docs/intc/index.html">Interrupt Controller</a></li><li><a href="digital_ip/ip/docs/pcie_tl_ep/index.html">PCIe Transaction-Layer Endpoint</a></li><li><a href="digital_ip/ip/docs/quadrature_decoder/index.html">Quadrature Decoder</a></li><li><a href="digital_ip/ip/docs/sdio_host/index.html">SDIO Host</a></li><li><a href="digital_ip/ip/docs/spi_flash_ctrl/index.html">SPI Flash Controller</a></li><li><a href="digital_ip/ip/docs/spi_master/index.html">SPI Master</a></li><li><a href="digital_ip/ip/docs/spi_slave/index.html">SPI Slave</a></li><li><a href="digital_ip/ip/docs/uart/index.html">UART</a></li><li><a href="digital_ip/ip/docs/uart_rx/index.html">UART RX</a></li><li><a href="digital_ip/ip/docs/uart_tx/index.html">UART TX</a></li><li><a href="digital_ip/ip/docs/usb_fs_sie/index.html">USB Full-Speed SIE</a></li></ul></section>
+<section class="ip-category"><h3>Video scaler &amp; image pipeline IP</h3><p>Nearest, bilinear, bicubic, Lanczos, polyphase, edge-directed and anisotropic scalers, sharpening, frame buffers and the AXI control plane around them.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/axi_checkers/index.html">AXI Checkers</a></li><li><a href="digital_ip/ip/docs/axil_regbus/index.html">AXI4-Lite Register Bus</a></li><li><a href="digital_ip/ip/docs/axil_split/index.html">AXI4-Lite Split</a></li><li><a href="digital_ip/ip/docs/banked_framebuf/index.html">Banked Frame Buffer</a></li><li><a href="digital_ip/ip/docs/scaler_anisotropic/index.html">Anisotropic Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_bicubic/index.html">Bicubic Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_bilinear/index.html">Bilinear Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_ctrl/index.html">Scaler Controller</a></li><li><a href="digital_ip/ip/docs/scaler_dda/index.html">DDA Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_edge_directed/index.html">Edge-Directed Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_lanczos/index.html">Lanczos Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_mip/index.html">MIP Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_nearest/index.html">Nearest Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_polyphase/index.html">Polyphase Scaler</a></li><li><a href="digital_ip/ip/docs/scaler_trilinear/index.html">Trilinear Scaler</a></li><li><a href="digital_ip/ip/docs/sharpen_cas/index.html">Sharpen CAS</a></li><li><a href="digital_ip/ip/docs/spatial_upscaler/index.html">Spatial Upscaler</a></li></ul></section>
+<section class="ip-category"><h3>Timers, counters &amp; clock generation</h3><p>Baud generators, NCOs, PWM, pulse generators, frequency counters, interval/timeout timers, timestamps and a watchdog.</p><ul class="ip-list"><li><a href="digital_ip/ip/docs/baud_generator/index.html">Baud Generator</a></li><li><a href="digital_ip/ip/docs/baud_nco/index.html">Baud NCO</a></li><li><a href="digital_ip/ip/docs/clock_enable/index.html">Clock Enable</a></li><li><a href="digital_ip/ip/docs/counter/index.html">Counter</a></li><li><a href="digital_ip/ip/docs/frequency_counter/index.html">Frequency Counter</a></li><li><a href="digital_ip/ip/docs/interval_timer/index.html">Interval Timer</a></li><li><a href="digital_ip/ip/docs/nco/index.html">NCO</a></li><li><a href="digital_ip/ip/docs/pulse_generator/index.html">Pulse Generator</a></li><li><a href="digital_ip/ip/docs/pwm/index.html">PWM</a></li><li><a href="digital_ip/ip/docs/rate_limiter/index.html">Rate Limiter</a></li><li><a href="digital_ip/ip/docs/timeout_timer/index.html">Timeout Timer</a></li><li><a href="digital_ip/ip/docs/timestamp_counter/index.html">Timestamp Counter</a></li><li><a href="digital_ip/ip/docs/watchdog/index.html">Watchdog</a></li></ul></section>
+<!-- IP-INDEX:END -->
+
+        <h2 style="margin-top: 60px;">Design notes</h2>
+        <ul class="notes-list">
+            <li><a href="design-notes/lens-distortion-correction.html">Lens distortion correction: pipeline design decisions</a> &mdash; on-chip frame buffer, Q16.16 fixed point, latency budget and verification.</li>
+            <li><a href="design-notes/async-fifo-gray-code-cdc.html">Async FIFO and Gray-code clock-domain crossing</a> &mdash; pointer synchronization, full/empty generation, FWFT output and timing constraints.</li>
+            <li><a href="design-notes/axi-stream-width-converter.html">AXI-Stream width converter</a> &mdash; upsizing and downsizing with tkeep, tlast and tuser handling.</li>
+        </ul>
 
         <h2 style="margin-top: 60px;">Core Technical Capabilities</h2>
         <table>

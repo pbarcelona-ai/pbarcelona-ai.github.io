@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>AXI-Stream Width Converter in SystemVerilog: Design Notes | FPGA Cores 4U</title>
+    <meta name="description" content="Design of an AXI4-Stream data width converter in SystemVerilog: upsizing and downsizing, tkeep and tlast handling, tuser, byte order, throughput and verification.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="FPGA Cores 4U">
+    <meta property="og:title" content="AXI-Stream Width Converter in SystemVerilog: Design Notes">
+    <meta property="og:description" content="Design of an AXI4-Stream data width converter in SystemVerilog: upsizing and downsizing, tkeep and tlast handling, tuser, byte order, throughput and verification.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AXI-Stream Width Converter in SystemVerilog: Design Notes">
+    <meta name="twitter:description" content="Design of an AXI4-Stream data width converter in SystemVerilog: upsizing and downsizing, tkeep and tlast handling, tuser, byte order, throughput and verification.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "AXI-Stream Width Converter in SystemVerilog: Design Notes", "url": "https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html", "datePublished": "2026-10-01", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "about": "AXI4-Stream data width conversion in SystemVerilog", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: AXI-Stream Width Converter", "item": "https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main>
+        <p class="eyebrow">Design notes</p>
+        <h1>AXI-Stream width converter: upsizing, downsizing and tkeep</h1>
+        <article>
+            <p>These notes cover the <a href="../digital_ip/ip/docs/axi_stream_width_converter/index.html">axi_stream_width_converter</a> core, which changes the data width of an AXI4-Stream between <code>IN_BYTES</code> and <code>OUT_BYTES</code>. A typical use is narrowing a 32-bit DMA stream into a byte-wide UART or SPI path, or packing an 8-bit sensor stream into 32-bit words before it is written to memory. One width must be an integer multiple of the other; if they are equal, the core reduces to a register slice.</p>
+
+            <h2>Interface and byte order</h2>
+<pre><code>axi_stream_width_converter #(
+  .IN_BYTES (4),   // s_axis_tdata is 32 bits
+  .OUT_BYTES(1),   // m_axis_tdata is 8 bits
+  .USER_W   (1)
+) u_wc ( .aclk, .aresetn, .s_axis_*, .m_axis_*, .keep_err_o );</code></pre>
+            <p>Byte order is little-endian, as in the AXI4-Stream convention: byte 0 of the wide word (<code>tdata[7:0]</code>) is the first byte on the narrow side. Ratios that aren't whole multiples (for example 3 &rarr; 2 bytes) are rejected at elaboration with <code>$error</code>, so the mistake shows up at build time rather than as corrupted data on hardware.</p>
+
+            <h2>Downsizing (wide &rarr; narrow)</h2>
+            <p>The downsizer captures one input beat and then sends it out in <code>RATIO = IN_BYTES / OUT_BYTES</code> chunks, selecting each chunk with an index into the held word. Two details make it packet-correct:</p>
+            <ul>
+                <li><strong>Trailing empty chunks are skipped.</strong> On the last beat of a packet, the core finds the highest chunk with any <code>tkeep</code> bit set and stops there. A 7-byte packet on a 4 &rarr; 1 converter therefore produces exactly 7 output beats, not 8 with one empty byte.</li>
+                <li><strong><code>tlast</code> moves to the last valid chunk.</strong> It is asserted on the final chunk the core actually sends, so downstream logic sees a clean packet boundary.</li>
+            </ul>
+            <p>Non-last beats always send every chunk, because AXI4-Stream only allows null bytes at the end of a packet in the usual "continuous aligned" usage.</p>
+
+            <h2>Upsizing (narrow &rarr; wide)</h2>
+            <p>The upsizer writes each input beat into its slot of the wide output word, along with its <code>tkeep</code> bits, and asserts <code>m_axis_tvalid</code> once the word is full. If <code>tlast</code> arrives before the word fills, the core <strong>flushes early</strong>: the partial word goes out with <code>tlast</code> set and <code>tkeep</code> marking only the bytes that were filled. A new packet always starts at byte 0 of a fresh output word, so packets are never merged into the same beat.</p>
+
+            <h2>tuser and tkeep rules</h2>
+            <ul>
+                <li><code>tuser</code> is carried on the <code>tlast</code> beat only. This suits the common use of <code>tuser</code> as a per-packet flag, such as an error or drop marker. A per-byte sideband would need a different design.</li>
+                <li><code>tkeep</code> must be contiguous from byte 0 (<code>0001</code>, <code>0011</code>, <code>0111</code>, <code>1111</code>). The check is a single expression: <code>(tkeep &amp; (tkeep + 1)) == 0</code>. A beat with a gap is passed through as given, and <code>keep_err_o</code> pulses for one clock so system logic can count or trap the error.</li>
+            </ul>
+
+            <h2>Latency and throughput</h2>
+            <p>Latency is one clock for downsizing and equal widths. For upsizing it is the ratio in clocks, since the core has to collect a whole word before sending it. The control logic is deliberately minimal &mdash; one data register and a counter, with no skid buffer. The cost is a single idle cycle between words: the downsizer accepts a new input beat in the cycle after the last chunk leaves, and the upsizer accepts new input in the cycle after the full word is taken. With 4:1, that means 4 narrow beats every 5 clocks. If a link has to run at 100% on the narrow side, add an <a href="../digital_ip/ip/docs/axi_stream_fifo/index.html">AXI-Stream FIFO</a> or a register slice on the wide side.</p>
+
+            <h2>Verification</h2>
+            <p>The self-checking testbench sends 200 random packets (random length, partial final <code>tkeep</code>) through 4&rarr;1, 4&rarr;2, 1&rarr;4, 2&rarr;4 and 4&rarr;4 instances with random stalls on both handshakes. A reference model compares the byte stream, packet boundaries and <code>tuser</code> at byte level. A downsize-then-upsize round trip must also reproduce the original beats exactly, which catches byte-order and <code>tkeep</code> mistakes that a single direction could miss.</p>
+
+            <h2>Related cores</h2>
+            <ul>
+                <li><a href="../digital_ip/ip/docs/axi_stream_width_converter/index.html">axi_stream_width_converter</a> &mdash; module page with the port list.</li>
+                <li><a href="../digital_ip/ip/docs/axi_stream_fifo/index.html">AXI-Stream FIFO</a> and <a href="../digital_ip/ip/docs/axi_stream_arbiter/index.html">AXI-Stream arbiter</a> &mdash; other parts of the streaming fabric.</li>
+                <li><a href="../digital_ip/ip/docs/axis_async_bridge/index.html">AXI-Stream async bridge</a> &mdash; for when the two widths also run on different clocks (see the <a href="async-fifo-gray-code-cdc.html">async FIFO design notes</a>).</li>
+                <li><a href="../digital_ip/ip/docs/packet_formatter/index.html">packet_formatter</a> and <a href="../digital_ip/ip/docs/packet_parser/index.html">packet_parser</a> &mdash; framing on top of AXI-Stream.</li>
+            </ul>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://pbarcelona-ai.github.io/</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url> 
     <loc>https://pbarcelona-ai.github.io/demo/index.html</loc>
@@ -13,12 +13,8 @@
     <lastmod>2026-09-30</lastmod>
   </url>
   <url>
-    <loc>https://pbarcelona-ai.github.io/image_system_demo.html</loc>
-    <lastmod>2026-09-30</lastmod>
-  </url>
-  <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/design-notes/lens-distortion-correction.html</loc>
@@ -26,378 +22,406 @@
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/async_fifo/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi4_lite_cdc/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi4_lite_decoder/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi4_lite_mux/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi4_lite_regs/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi4_lite_slave/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi_checkers/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi_stream_arbiter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi_stream_fifo/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axi_stream_width_converter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axil_regbus/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axil_split/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axis_async_bridge/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/axis_dma/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/banked_framebuf/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/baud_generator/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/baud_nco/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/bit_sync/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/checksum/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/cic/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/clock_domain_bridge/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/clock_enable/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/cordic/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/counter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/crc16/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/crc32/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/crc8/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/dds/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/demo_regs/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/dma_engine/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/ecc_memory_ctrl/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/edge_detect/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/edge_event_capture/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/error_status/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/eth_mac_if/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/fallthrough_fifo/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/fir/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/frequency_counter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/gpio/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/i2c_master/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/i2s/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/intc/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/interval_timer/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/lfsr/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/mac/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/memory_arbiter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/nco/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/onehot_decoder/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/packet_fifo/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/packet_formatter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/packet_parser/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/parity_check/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/parity_gen/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/pcie_tl_ep/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/priority_encoder/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/pulse_generator/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/pulse_sync/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/pwm/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/quadrature_decoder/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/rate_limiter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/register_file/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/reset_ctrl/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/reset_sync/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/rom/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_anisotropic/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_bicubic/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_bilinear/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_ctrl/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_dda/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_edge_directed/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_lanczos/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_mip/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_nearest/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_polyphase/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_tb_lib/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/scaler_trilinear/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/sdio_host/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/sharpen_cas/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/simple_dual_port_ram/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/single_port_ram/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/spatial_upscaler/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/spi_flash_ctrl/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/spi_master/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/spi_slave/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/sync_fifo/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/timeout_timer/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/timestamp_counter/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/toggle_sync/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/true_dual_port_ram/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/uart/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/uart_rx/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/uart_tx/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/usb_fs_sie/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
   </url>
   <url>
     <loc>https://pbarcelona-ai.github.io/digital_ip/ip/docs/watchdog/index.html</loc>
-    <lastmod>2026-09-30</lastmod>
+    <lastmod>2026-10-01</lastmod>
+  </url>
+  <url>
+    <loc>https://pbarcelona-ai.github.io/design-notes/async-fifo-gray-code-cdc.html</loc>
+    <lastmod>2026-10-01</lastmod>
+  </url>
+  <url>
+    <loc>https://pbarcelona-ai.github.io/design-notes/axi-stream-width-converter.html</loc>
+    <lastmod>2026-10-01</lastmod>
+  </url>
+  <url>
+    <loc>https://pbarcelona-ai.github.io/digital_ip/ip/tools/docs/index.html</loc>
+    <lastmod>2026-10-01</lastmod>
+  </url>
+  <url>
+    <loc>https://pbarcelona-ai.github.io/digital_ip/image_processing/vision_system/docs/site/index.html</loc>
+    <lastmod>2026-10-01</lastmod>
+  </url>
+  <url>
+    <loc>https://pbarcelona-ai.github.io/digital_ip/image_processing/vision_system/docs/site/architecture.html</loc>
+    <lastmod>2026-10-01</lastmod>
+  </url>
+  <url>
+    <loc>https://pbarcelona-ai.github.io/digital_ip/image_processing/vision_system/docs/site/registers.html</loc>
+    <lastmod>2026-10-01</lastmod>
+  </url>
+  <url>
+    <loc>https://pbarcelona-ai.github.io/digital_ip/image_processing/vision_system/docs/site/synthesis.html</loc>
+    <lastmod>2026-10-01</lastmod>
   </url>
 </urlset>
