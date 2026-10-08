@@ -35,4 +35,4 @@ python3 -m pagefind --site .               # search index under /pagefind/ (used
 
 The `Deploy Pages` GitHub Actions workflow runs these steps on every push to `main`, deploys, then submits the sitemap's URLs to IndexNow (Bing, Yandex and others) with `scripts/indexnow.py`. The IndexNow key is the `<32 hex chars>.txt` file at the site root.
 
-Design notes live in `design-notes/`; add new ones to the list on the home page, and to `DESIGN_NOTES` in `build_digital_ip_docs.py` to link them from the matching module pages.
+Design notes live in `design-notes/`; add new ones to the list on the home page, and to `DESIGN_NOTES` in `build_digital_ip_docs.py` to link them from the matching module pages. A note can also be written in Markdown and converted with `python3 scripts/md_to_note.py NOTE.md --slug <name> [--title ... --description ... --date ...]`, which writes `design-notes/<name>.html` in the same page template (see the script's header for the supported Markdown).

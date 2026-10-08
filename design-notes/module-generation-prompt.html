@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a192f">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <title>A prompt template for generating verified SystemVerilog IP | FPGA Cores 4U</title>
+    <meta name="description" content="A fill-in-the-blanks prompt for asking an AI assistant to design, verify and document a SystemVerilog IP block: interfaces, register map, behaviour, constraints, deliverables and verification, with a worked blur/sharpen example.">
+    <link rel="canonical" href="https://pbarcelona-ai.github.io/design-notes/module-generation-prompt.html">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="FPGA Cores 4U">
+    <meta property="og:title" content="A prompt template for generating verified SystemVerilog IP">
+    <meta property="og:description" content="A fill-in-the-blanks prompt for asking an AI assistant to design, verify and document a SystemVerilog IP block: interfaces, register map, behaviour, constraints, deliverables and verification, with a worked blur/sharpen example.">
+    <meta property="og:url" content="https://pbarcelona-ai.github.io/design-notes/module-generation-prompt.html">
+    <meta property="og:image" content="https://pbarcelona-ai.github.io/og/notes-module-generation-prompt.png">
+    <meta name="twitter:image" content="https://pbarcelona-ai.github.io/og/notes-module-generation-prompt.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="A prompt template for generating verified SystemVerilog IP">
+    <meta name="twitter:description" content="A fill-in-the-blanks prompt for asking an AI assistant to design, verify and document a SystemVerilog IP block: interfaces, register map, behaviour, constraints, deliverables and verification, with a worked blur/sharpen example.">
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "A prompt template for generating verified SystemVerilog IP", "url": "https://pbarcelona-ai.github.io/design-notes/module-generation-prompt.html", "datePublished": "2026-10-08", "dateModified": "2026-10-08", "author": {"@type": "Organization", "name": "FPGA Cores 4U"}, "image": "https://pbarcelona-ai.github.io/og/notes-module-generation-prompt.png", "about": "Specifying SystemVerilog IP for AI-assisted generation", "proficiencyLevel": "Expert"}</script>
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://pbarcelona-ai.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Design Notes: A prompt template for generating verified SystemVerilog IP", "item": "https://pbarcelona-ai.github.io/design-notes/module-generation-prompt.html"}]}</script>
+    <link rel="stylesheet" href="../site.css">
+    <style>
+        main { max-width: 760px; margin: 0 auto; padding: 60px 20px 100px; }
+        h1 { font-size: 2.1rem; }
+        .eyebrow { color: var(--accent); font-family: monospace; font-size: 0.85rem; text-transform: uppercase; }
+        article h2 { margin-top: 40px; }
+        article p, article li { color: var(--text); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 0.92rem; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+        th { color: var(--heading); }
+        .table-wrap { overflow-x: auto; }
+        blockquote { border-left: 3px solid var(--accent); margin: 16px 0; padding: 2px 16px; }
+        hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+        .updated { font-size: 0.85rem; margin-top: -6px; }
+        .back { display: inline-block; margin-top: 40px; }
+    </style>
+</head>
+<body>
+    <main data-pagefind-body>
+        <p class="eyebrow">Design notes</p>
+        <h1>A prompt template for generating verified SystemVerilog IP</h1>
+        <p class="updated">Published <time datetime="2026-10-08">2026-10-08</time></p>
+        <article>
+<p>A fill-in-the-blanks prompt for asking an AI coding assistant to design, verify and document a new IP block in the FPGA Cores 4U library's conventions. It asks for everything a reviewer would want before accepting a module: the interfaces, a register map, behaviour precise enough for a bit-exact model, tool constraints, the deliverables and a verification plan.</p>
+<p>Copy the template and replace every <code>&lt;...&gt;</code> field; the text inside each field is a hint. Part 2 is the template filled in for <code>blur_sharpen</code>, a two-stage blur and sharpen filter for AXI4-Stream video, as a worked example.</p>
+<hr>
+<h2 id="part-1-template">Part 1: Template</h2>
+<pre><code class="language-text">Create a new SystemVerilog IP block for the FPGA Cores 4 U digital IP library.
+
+=== 1. Identity ===
+Module name:      &lt;module_name&gt;
+Library category: &lt;video | bus | cdc | cpu | peripherals | fifo | timing | scalers | ...&gt;
+Location:         ip/&lt;category&gt;/&lt;module_name&gt;/
+One-line purpose: &lt;what it does, in one sentence&gt;
+Version:          1.0.0
+
+=== 2. Context ===
+Where it is used:   &lt;the upstream and downstream blocks, e.g. "after isp_csc in video_pipeline"&gt;
+Existing IP to reuse (do not duplicate): &lt;e.g. isp_window, ip_axil_regs, ip_axis_fifo, async_fifo, pulse_sync&gt;
+Existing IP it must stay compatible with: &lt;modules, register maps or stream formats&gt;
+
+=== 3. Parameters ===
+| Name | Default | Legal range | Meaning |
+|------|---------|-------------|---------|
+| &lt;P1&gt; | &lt;..&gt;    | &lt;..&gt;        | &lt;..&gt;    |
+Reject illegal values at elaboration with $error inside a generate block.
+
+=== 4. Clocks and resets ===
+Clocks: &lt;clk only | list each clock, its relationship, and which logic runs on it&gt;
+Reset:  synchronous, active-low rst_n (or aresetn), one per clock domain
+Clock-domain crossings: &lt;none | which signals cross and with which library synchroniser&gt;
+
+=== 5. Interfaces ===
+Every port gets a one-line comment. Use these standard forms:
+
+5a. AXI4-Stream data in / out (s_axis_*, m_axis_*):
+    tdata width: &lt;expression, e.g. C*CW&gt;; layout: &lt;e.g. component j in [j*CW +: CW], RGB = {B,G,R}&gt;
+    tuser = &lt;start of frame | other&gt;; tlast = &lt;end of line | end of packet&gt;; tkeep: &lt;used | not used&gt;
+    Back-pressure: honour tready and never drop data; valid must not depend combinationally on ready.
+    Throughput target: &lt;e.g. 1 beat per clock&gt;
+
+5b. AXI4-Lite control (s_axil_*), ADDR_W = &lt;n&gt;, 32-bit data, using ip_axil_regs:
+    | Offset | Name | Access | Reset | Fields |
+    |--------|------|--------|-------|--------|
+    | 0x000  | ID   | RO     | "&lt;4 ASCII chars&gt;" | |
+    | 0x004  | CTRL | RW     | &lt;..&gt;  | &lt;bit fields&gt; |
+    | ...    |      |        |       |        |
+    | 0x0xx  | INFO | RO     |       | build parameters |
+    When do new values take effect: &lt;immediately | at the next frame start | on a COMMIT write&gt;
+    Out-of-range accesses return SLVERR.
+
+5c. Other ports: &lt;interrupts (level or pulse), status outputs, external pins with direction and
+    open-drain _o/_t convention, memory interfaces&gt;
+
+=== 6. Function ===
+Describe the behaviour precisely enough to write a bit-exact model:
+- Algorithm / equations: &lt;formula including rounding, saturation and signedness&gt;
+- Operating modes: &lt;table: mode value, behaviour&gt;
+- Edge cases: &lt;frame borders, minimum and maximum sizes, empty input, overflow&gt;
+- Error and recovery behaviour: &lt;early or late SOF, short frames, FIFO overflow, bus errors, and what is counted&gt;
+- Latency: &lt;fixed or variable; must it be the same in every mode?&gt;
+- Mode or configuration changes: &lt;never split a frame or packet; describe the switch-over point&gt;
+
+=== 7. Implementation constraints ===
+- Synthesizable SystemVerilog-2012, technology independent (no vendor primitives; infer RAM and DSP).
+- Must parse in: iverilog 12+ (-g2012), Verilator lint (-Wall, no UNOPTFLAT or latches), Yosys
+  (add a scripts/sv2v marker file if Yosys needs sv2v).
+- iverilog restrictions to respect: declare before use; no enum ternaries without casts; no `break`
+  (use flags); no arrays of queues; no `wait` on function calls; no variable declarations inside
+  nested loop bodies of static initial blocks.
+- No combinational path from any ready input back to the same block's ready output.
+- Hoist scratch variables with defaults (no latches); split control and data always_ff blocks.
+- Resource budget: &lt;e.g. at most N DSP48, M RAMB18, ~K LUTs on Xilinx 7-series&gt;
+- Timing target: &lt;e.g. 150 MHz on 7-series, logic depth about 10 or less&gt;
+
+=== 8. Deliverables (library layout) ===
+ip/&lt;category&gt;/&lt;module_name&gt;/
+  src/&lt;module_name&gt;.sv        header: Filename / Author: FPGA Cores 4 U / Description (behaviour,
+                              register map, clock, reset, latency, resources) / Date
+  tb/&lt;module_name&gt;_tb.sv      self-checking, prints "TEST PASSED" or "TEST FAILED (n errors)"
+  scripts/build.f             RTL file list, dependency order (packages first)
+  tb/scripts/build.f          testbench file list
+  Makefile                    IP := &lt;module_name&gt; / include ../../scripts/ip.mk
+  docs/                       generated with `make diagrams`
+Also: add "&lt;module_name&gt;,&lt;category&gt;,&lt;top&gt;" to ip/scripts/ips.csv and a section to the category README.
+
+=== 9. Verification requirements ===
+Testbench (reuse ip/shared/tb/lib/axil_bfm.sv and the category's tb library):
+- An independent reference model (not a copy of the RTL); compare every output beat.
+- Register readback: ID, INFO, reset values, sign extension.
+- Every mode and parameter corner: &lt;list&gt;.
+- Random input gaps (about 25%) and output back-pressure (about 30%).
+- Configuration changed mid-frame or mid-packet: applies only at the defined switch-over point.
+- Edge cases: minimum and maximum sizes, borders, saturation at both ends.
+- Latency checks if latency is specified.
+- Protocol checks: tuser and tlast positions, no lost or extra beats, a global timeout.
+- Mutation check: deliberately break one rule and confirm the testbench fails (report this).
+Pass criteria: `make -C ip/&lt;category&gt;/&lt;module_name&gt; test` passes; Verilator lint clean; `make synth` passes
+and reports the resources.
+
+=== 10. Report back ===
+Summarize: the files created, the register map, test results (with the mutation result),
+the synthesis resources, any changes made to existing IP and why, and known limits.</code></pre>
+<hr>
+<h2 id="part-2-worked-example-blursharpen">Part 2: Worked example (<code>blur_sharpen</code>)</h2>
+<pre><code class="language-text">Create a new SystemVerilog IP block for the FPGA Cores 4 U digital IP library.
+
+=== 1. Identity ===
+Module name: blur_sharpen          Category: video          Location: ip/video/blur_sharpen/
+Purpose: blur and sharpen filter pair for AXI4-Stream video with four selectable orders.
+
+=== 2. Context ===
+Used after vision_system in video_processor's insert loop (24-bit RGB, pix_clk).
+Reuse: isp_window (N x N window, line buffers, borders) and ip_axil_regs. Build a reusable
+conv2d_core (isp_window + MAC) and a programmable conv2d_filter; blur_filter and
+sharpen_filter are conv2d_filter with different reset kernels. Kernels go in conv2d_pkg.
+
+=== 3. Parameters ===
+N (5; 3 or 5) kernel size | C (3) components | CW (8) component width | COEF_W (12) signed
+coefficient width | MAX_W (2048) longest line | BORDER (0 clamp, 1 mirror) | AMOUNT (1)
+sharpening strength | RESET_W / RESET_H (1920 / 1080) reset frame size
+
+=== 4. Clocks and resets ===
+clk only; synchronous active-low rst_n; no crossings.
+
+=== 5. Interfaces ===
+5a. s_axis / m_axis: tdata C*CW bits, component j in [j*CW +: CW]; tuser = SOF, tlast = EOL;
+    full back-pressure; 1 pixel per clock (plus isp_window's R idle cycles per line).
+5b. AXI4-Lite, ADDR_W = 9:
+    0x000 ID RO "BLSH" | 0x004 MODE [2:0] | 0x008 FRAME_SIZE [15:0] W [31:16] H |
+    0x00C BLUR_SHIFT | 0x010 SHARP_SHIFT | 0x014 STATUS RO [2:0] mode, [31:16] frames out |
+    0x018 INFO RO | 0x040+4i BLUR_K[i] | 0x0C0+4i SHARP_K[i] (signed; reads sign-extended)
+    MODE, FRAME_SIZE, kernels and shifts take effect at the next frame start.
+
+=== 6. Function ===
+Each stage: out = clamp((sum(K[i]*p[i]) + 2^(shift-1)) &gt;&gt;&gt; shift, 0, 2^CW-1), per component.
+Two stages always in line; an unused stage runs the identity kernel, so latency is identical:
+  MODE 0 blur / identity | 1 sharpen / identity | 2 sharpen / blur | 3 blur / sharpen | 4-7 identity / identity
+Reset kernels: binomial blur [1 4 6 4 1]^2/256; unsharp mask (1+a)I - a*blur, shift 8.
+Mode changes never split a frame; stage 2 uses the settings of the frame it is filtering.
+Minimum frame (N+1)/2 x (N+1)/2.
+
+=== 7. Constraints ===
+As in the template; budget at most 75 DSP48 per 5 x 5 RGB stage.
+
+=== 8-10 ===
+As in the template. The testbench covers all 5 modes against a two-stage conv2d_ref chain,
+equal latency in every mode, gaps and back-pressure, custom kernels in both orders (results must
+differ), MODE written mid-frame, a 6 x 3 frame, and mutations (stage order swapped; rounding removed).</code></pre>
+        </article>
+        <a class="back" href="../index.html">&larr; Back to homepage</a>
+    </main>
+</body>
+</html>
