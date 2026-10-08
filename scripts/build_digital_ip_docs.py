@@ -15,7 +15,9 @@ layers on this site's SEO/navigation conventions:
   a social card per core (og/<name>.png), SoftwareSourceCode and breadcrumb
   JSON-LD, favicon;
 - a datasheet section (clocking/reset/latency from the RTL header, Yosys
-  utilization from docs/STATUS.md, parameters), the RTL hierarchy diagram,
+  utilization from docs/STATUS.md, parameters), the RTL hierarchy diagram, the
+  block / state diagrams (*_block_diagram.svg, *_fsm.svg) and data-flow diagram
+  (<module>_dataflow.svg) from each core's docs folder,
   version and last-updated date, "typical applications" + related modules;
 - the catalog is published at /ip/, and the site's index.html IP index
   (between the IP-INDEX markers) is regenerated from it.
@@ -397,6 +399,7 @@ PAGE_STYLE = (
     ".spec-table code{background:var(--code-bg);padding:1px 5px;border-radius:3px}"
     ".diagram{margin:8px 0 24px;padding:16px;background:#fff;border-radius:6px;overflow-x:auto}"
     ".diagram img{display:block;max-width:100%;height:auto;margin:0 auto}"
+    ".diagram figcaption{margin-top:8px;font-size:12px;text-align:center}"
     ".topnav{display:flex;gap:16px}"
     ".updated{margin:12px 0 0;font-size:12px}"
     "</style>"
@@ -499,6 +502,47 @@ def diagram_section(category_dir: str, module: str, pretty: str) -> str:
         f'<figure class="diagram"><img src="{src}" alt="{html.escape(alt, quote=True)}"{size} loading="lazy"></figure>'
         '</article></section>'
     )
+
+
+def svg_size(svg: Path) -> str:
+    """width / height attributes (px) from a Graphviz SVG's pt size, so the page reserves the space."""
+    head = svg.read_text(encoding="utf-8", errors="replace")[:2000]
+    wm, hm = re.search(r'width="([\d.]+)pt"', head), re.search(r'height="([\d.]+)pt"', head)
+    return f' width="{round(float(wm.group(1)) * 4 / 3)}" height="{round(float(hm.group(1)) * 4 / 3)}"' if wm and hm else ""
+
+
+def figure(src: str, alt: str, size: str, caption: str) -> str:
+    """A diagram that scales to the page; the image links to the full-size SVG for zooming."""
+    return (f'<figure class="diagram"><a href="{src}" target="_blank" rel="noopener">'
+            f'<img src="{src}" alt="{html.escape(alt, quote=True)}"{size} loading="lazy"></a>'
+            f'<figcaption class="quiet">{caption} <a href="{src}" target="_blank" rel="noopener">Open full size</a></figcaption>'
+            '</figure>')
+
+
+def architecture_diagrams_section(category_dir: str, module: str, pretty: str) -> str:
+    """Hand-drawn block diagrams (<module>_block_diagram.svg, <module>_fsm.svg) and the generated
+    data-flow diagram (<module>_dataflow.svg, ip/scripts/make_dataflow_diagrams.py) of a core."""
+    docs = SUBMODULE_IP / category_dir / module / "docs"
+    base = f"/digital_ip/ip/{category_dir}/{module}/docs"
+    parts = []
+    for svg in sorted(docs.glob("*_block_diagram.svg")) + sorted(docs.glob("*_fsm.svg")):
+        kind = "state machine" if svg.stem.endswith("_fsm") else "block diagram"
+        parts.append(f"<h2>{pretty} {kind}</h2>" + figure(
+            f"{base}/{svg.name}", f"{kind.capitalize()} of the {pretty} SystemVerilog IP core.", svg_size(svg),
+            f"Architecture {kind}, with module, instance and signal names from the RTL."))
+    flow = docs / f"{module}_dataflow.svg"
+    if flow.is_file():
+        parts.append("<h2>Data flow</h2>" + figure(
+            f"{base}/{flow.name}",
+            f"Data-flow diagram of the {pretty} SystemVerilog IP core: ports, registers, combinational "
+            "signals and sub-module instances with the signal names from the RTL.",
+            svg_size(flow),
+            "Generated from the RTL: inputs on the left, outputs on the right, every register (double border) and "
+            "combinational signal with its source always block, sub-modules in yellow, AXI buses as one teal line."))
+    if not parts:
+        return ""
+    return ('<section class="content"><article><p class="eyebrow">Architecture</p>'
+            + "".join(parts) + "</article></section>")
 
 
 def spec_section(fields: dict[str, str], version: str | None, date: str | None,
@@ -713,7 +757,8 @@ def main() -> None:
         content = add_typical_applications(content, category, module, siblings, titles)
         extra = (spec_section(fields, version, date, status.get(module),
                               parse_parameters(OUT_ROOT / "docs" / module / f"{module}.sv"))
-                 + diagram_section(cat_dir, module, pretty))
+                 + diagram_section(cat_dir, module, pretty)
+                 + architecture_diagrams_section(cat_dir, module, pretty))
         content = enhance_module_body(content, narrative or desc, version, date, extra)
 
         publish_short_url(content, f"/digital_ip/ip/docs/{module}/", ip_path(module))
